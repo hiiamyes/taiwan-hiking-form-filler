@@ -1,0 +1,36 @@
+application.json
+
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# dotenv files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Playwright cache & output
+playwright-report/
+test-results/
+.vscode/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Others
+*.local
