@@ -7,7 +7,7 @@ A CLI/script tool that auto-fills Taiwan National Park hiking permit application
 
 👉 [Watch full demo video on YouTube](https://youtu.be/_c_niUu43xU)
 
-![Demo screenshot](./taiwan-hiking-form-filler-demo-2025-0504.png)
+[![Watch the demo video](./taiwan-hiking-form-filler-demo-2025-0504.png)](https://youtu.be/_c_niUu43xU)
 
 ---
 
