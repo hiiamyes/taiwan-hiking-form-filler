@@ -3,6 +3,10 @@
 A CLI/script tool that auto-fills Taiwan National Park hiking permit application forms — saving you time, keystrokes, and typos.  
 ⚠️ **This tool does not submit the form or bypass the reCAPTCHA.**
 
+## 🎥 Demo
+
+[![Watch the demo video](https://img.youtube.com/vi/vQUlw0EJhVE/0.jpg)](https://youtu.be/vQUlw0EJhVE)
+
 ---
 
 ## 🔍 What it does
