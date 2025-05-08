@@ -1,0 +1,59 @@
+
+{
+  "org": "雪霸國家公園管理處",
+  "route": "(3級) 武陵一秀或二秀 (桃山、池有山) 單日往返",
+  "numOfDays": 1,
+  "startDate": "2025-07-01",
+  "plan": [{ "spots": ["武陵四秀登山口", "桃山登山口", "桃山", "桃山登山口", "武陵四秀登山口"] }],
+  "watcher": {
+    "name": "留守人",
+    "homePhone": "0234567890",
+    "mobilePhone": "0911222334",
+    "birthday": "1980-06-15",
+    "email": "watcher@example.com"
+  },
+  "members": [
+    {
+      "leader": true,
+      "name": "領隊申請人",
+      "idNumber": "T198209723",
+      "homePhone": "0234567890",
+      "mobilePhone": "0911222333",
+      "birthday": "1990-01-01",
+      "city": "新北市",
+      "district": "樹林區",
+      "addressDetail": "XX路123號4樓",
+      "email": "leader@example.com",
+      "emergencyContactName": "緊急聯絡人",
+      "emergencyContactPhone": "0922333444"
+    },
+    {
+      "leader": false,
+      "name": "隊員1",
+      "idNumber": "A283914660",
+      "homePhone": "0234567890",
+      "mobilePhone": "0933444555",
+      "birthday": "1992-05-10",
+      "city": "台南市",
+      "district": "東區",
+      "addressDetail": "XX路123號4樓",
+      "email": "member1@example.com",
+      "emergencyContactName": "緊急聯絡人",
+      "emergencyContactPhone": "0911333555"
+    },
+    {
+      "leader": false,
+      "name": "隊員2",
+      "idNumber": "P265666476",
+      "homePhone": "0234567890",
+      "mobilePhone": "0955666777",
+      "birthday": "1988-12-25",
+      "city": "台中市",
+      "district": "北區",
+      "addressDetail": "XX路123號4樓",
+      "email": "member2@example.com",
+      "emergencyContactName": "緊急聯絡人",
+      "emergencyContactPhone": "0933222111"
+    }
+  ]
+}
