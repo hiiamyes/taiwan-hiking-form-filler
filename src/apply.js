@@ -78,7 +78,7 @@ async function apply() {
     const day = plan[i];
     if (i > 0) await page.getByText(`第${i + 1}天行程`).waitFor({ state: "visible" });
     for (const spot of day.spots) {
-      await page.getByRole("radio", { name: spot }).check();
+      await page.getByRole("radio", { name: new RegExp(spot, "i") }).check();
     }
     await page.waitForTimeout(1000);
     await page.getByRole("link", { name: "  完成路線" }).click();
