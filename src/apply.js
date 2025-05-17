@@ -1,8 +1,14 @@
 const { chromium } = require("playwright");
+const fs = require("fs");
+const path = require("path");
 const readline = require("readline");
-const data = require("./application.json");
+const sharp = require("sharp");
+const Tesseract = require("tesseract.js");
 
-async function promptUserInput(promptText) {
+const data = require("./application.json");
+const shouldSubmit = process.argv.includes("--submit");
+
+const promptUserInput = (promptText) => {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -15,7 +21,33 @@ async function promptUserInput(promptText) {
       resolve(answer);
     });
   });
-}
+};
+
+const submit = async (page) => {
+  if (!shouldSubmit) return;
+  while (true) {
+    await page.locator(".fa-sync-alt").click();
+    // console.log(`${index + 1}th try...`);
+    const captchaElement = await page.locator("#con_imgcode");
+    const captchaBuffer = await captchaElement.screenshot();
+    const captchaPath = path.join(__dirname, "captcha.png");
+    const processedBuffer = await sharp(captchaBuffer).grayscale().threshold(120).resize({ width: 400 }).toBuffer();
+    fs.writeFileSync(captchaPath, processedBuffer);
+    const res = await Tesseract.recognize(processedBuffer, "eng", {
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    });
+    const {
+      data: { text },
+    } = res;
+    const code = text.replace(/[^a-zA-Z0-9]/g, "").trim();
+    // console.log("code: ", code);
+    if (code) {
+      await page.locator("#con_vcode").fill(code);
+      break;
+    }
+  }
+  await page.locator("#con_btnsave").click();
+};
 
 async function apply() {
   const { org, route, destination, numOfDays, plan, members, watcher } = data;
@@ -33,9 +65,10 @@ async function apply() {
     viewport: null,
   });
   const page = await context.newPage();
-  page.once("dialog", (dialog) => {
+  page.on("dialog", async (dialog) => {
     console.log(`Dialog message: ${dialog.message()}`);
     dialog.dismiss().catch(() => {});
+    await submit(page);
   });
 
   /**
@@ -209,6 +242,11 @@ async function apply() {
     document.documentElement.style.transform = "scale(0.5)";
     document.documentElement.style.transformOrigin = "top left";
   });
+
+  /**
+   *
+   */
+  await submit(page);
 }
 
 apply().catch(console.error);

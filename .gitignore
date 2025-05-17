@@ -1,5 +1,7 @@
 applications/
 application.json
+src/captcha.png
+*.traineddata
 
 # Node modules
 node_modules/
