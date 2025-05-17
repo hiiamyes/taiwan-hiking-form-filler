@@ -18,7 +18,8 @@ async function promptUserInput(promptText) {
 }
 
 async function apply() {
-  const { org, route, numOfDays, plan, members, watcher } = data;
+  const { org, route, destination, numOfDays, plan, members, watcher } = data;
+  const isYushan = org === "玉山國家公園管理處";
   let { startDate } = data;
 
   const leader = members.find(({ leader }) => leader);
@@ -49,6 +50,10 @@ async function apply() {
    *
    */
   const agreements = [
+    "請注意，領隊及隊員名單如有外籍人士，請提醒攜帶具有GPS功能之通訊器材，手機請打開國際漫遊之通訊及簡訊功能，以利災害應變與聯繫。",
+    "確認已於申請前詳閱「進入玉山國家公園生態保護區申請案件個人資料運用說明」，已轉知並取得全體隊員同意使用當事人個人資料辦理入園申請相關事宜。",
+    "確認已於申請前詳閱並明瞭「申請及入園注意事項」及「申辦規定與須知」，並轉知全體隊員瞭解並遵守入園相關規定。並提醒若委由他人代辦，亦應檢視是否完成許可程序(如個人資料、行程規劃等均應詳加檢視)，若疏忽未檢視，難謂無過失之責。",
+    "入園期間應攜帶入園許可證及身分證明文件正本俾利查核，未攜帶身分證明文件或所攜帶身分證明文件與入園許可證名冊不符者，禁止其入園。已入園者得令其離園。不聽制止或未依前段規定入園者，得依國家公園法第 19條規定處罰。",
     "為維護安全並避免意外，請勿擅自進入三六九山莊施工工區，住宿請依規定申請三六九臨時營地。",
     "請注意，領隊及隊員名單如有外籍人士，請提醒攜帶具有GPS",
     "申請人應瞭解並填具所有正確的隊員資料與行程計畫。如明知為不實或冒用他人資料填載入園申請之事項，已構成刑法第 210 條偽造文書罪嫌，或構成刑法第 214",
@@ -59,19 +64,24 @@ async function apply() {
     "本人已閱讀並充分瞭解上述注意事項，並會遵守國家公園、警政署各項規定。",
   ];
   for (let i = 0; i < agreements.length; i++) {
-    await page
-      .getByRole("row", {
-        name: agreements[i],
-      })
-      .getByRole("checkbox")
-      .check();
+    const row = page.getByRole("row", { name: agreements[i] });
+    try {
+      await row.waitFor({ timeout: 200 }); // Wait up to 0.2s for the row to appear
+      await row.getByRole("checkbox").check();
+    } catch (e) {
+      // Skip if the row or checkbox doesn't exist or timeout occurs
+      continue;
+    }
   }
   await page.getByRole("button", { name: "同意", exact: true }).click();
 
   /**
    *
    */
-  await page.getByRole("textbox", { name: "隊伍名稱" }).fill(`${leader.name}-${route}-${startDate}-${numOfDays}days`);
+  await page
+    .getByRole("textbox", { name: isYushan ? "請輸入隊名" : "隊伍名稱" })
+    .fill(`${leader.name}-${route}-${startDate}-${numOfDays}days`);
+
   await page.locator("#con_sumday").selectOption(String(numOfDays));
   await page.locator("#con_applystart").selectOption(startDate);
   for (let i = 0; i < plan.length; i++) {
@@ -83,9 +93,9 @@ async function apply() {
     await page.waitForTimeout(1000);
     await page.getByRole("link", { name: "  完成路線" }).click();
   }
-
   await page.getByText("請選擇下一個地點：").waitFor({ state: "hidden" });
-  await page.getByRole("button", { name: "下一步" }).click();
+  if (destination) await page.locator("#con_NpaPlacesInfo").selectOption(destination);
+  await page.getByRole(isYushan ? "link" : "button", { name: "下一步" }).click();
 
   /**
    *
@@ -95,16 +105,18 @@ async function apply() {
       name: "請確認領隊或隊員同意委託申請人代理蒐集當事人個人資料，並委託其上網向國家公園管理處提出登山申請相關事宜，以免違反相關法令。",
     })
     .check();
-  await page.getByRole("textbox", { name: "申請人姓名" }).fill(leader.name);
-  await page.getByRole("textbox", { name: "申請人電話" }).fill(leader.homePhone || leader.mobilePhone);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入姓名" : "申請人姓名" }).fill(leader.name);
+  await page
+    .getByRole("textbox", { name: isYushan ? "請輸入電話" : "申請人電話" })
+    .fill(leader.homePhone || leader.mobilePhone);
   await page.locator("#con_ddlapply_country").selectOption({ label: leader.city });
   await page.locator("#con_ddlapply_city").selectOption({ label: leader.district });
-  await page.getByRole("textbox", { name: "申請人地址" }).fill(leader.addressDetail);
-  await page.getByRole("textbox", { name: "申請人手機" }).fill(leader.mobilePhone);
-  await page.getByRole("textbox", { name: "申請人電子郵件" }).fill(leader.email);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入地址" : "申請人地址" }).fill(leader.addressDetail);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入手機" : "申請人手機" }).fill(leader.mobilePhone);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入電子郵件" : "申請人電子郵件" }).fill(leader.email);
   await page.locator("#con_apply_nation").selectOption("中華民國");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("textbox", { name: "申請人證號" }).fill(leader.idNumber);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入證號" : "申請人證號" }).fill(leader.idNumber);
   await page.evaluate(
     ({ leader }) => {
       document.querySelector('input[name="ctl00$con$apply_birthday"]').value = leader.birthday;
@@ -123,10 +135,11 @@ async function apply() {
   /**
    *
    */
-  await page.getByRole("button", { name: "   隊員資料(請展開填寫資料)" }).click();
-  await page.locator("#con_member_keytype").check();
-  await page.waitForLoadState("networkidle");
-
+  if (membersWithoutLeader.length > 0) {
+    await page.getByRole("button", { name: "   隊員資料(請展開填寫資料)" }).click();
+    if (!isYushan) await page.locator("#con_member_keytype").check();
+    await page.waitForLoadState("networkidle");
+  }
   for (let i = 0; i < membersWithoutLeader.length; i++) {
     const {
       name,
@@ -142,7 +155,8 @@ async function apply() {
       birthday,
     } = membersWithoutLeader[i];
     const label = `No.${i + 1}隊員資料`;
-    await page.getByRole("link", { name: "  新增隊員" }).click();
+    await page.getByRole("link", { name: new RegExp("新增隊員", "i") }).click();
+    await page.getByRole("button", { name: new RegExp(label, "i") }).click();
     await page.getByLabel(label).getByRole("textbox", { name: "請輸入姓名" }).fill(name);
     await page.locator(`#con_lisMem_ddlmember_country_${i}`).selectOption({ label: city });
     await page.locator(`#con_lisMem_ddlmember_city_${i}`).selectOption({ label: district });
@@ -165,11 +179,18 @@ async function apply() {
   /**
    *
    */
+  await page.waitForTimeout(200);
   await page.getByRole("button", { name: "   留守人資料(請展開填寫資料)" }).click();
-  await page.getByRole("textbox", { name: "留守人姓名" }).fill(watcher.name);
-  await page.getByRole("textbox", { name: "留守人電話" }).fill(watcher.homePhone || watcher.mobilePhone);
-  await page.getByRole("textbox", { name: "留守人手機" }).fill(watcher.mobilePhone);
-  await page.getByRole("textbox", { name: "留守人電子郵件" }).fill(watcher.email);
+  await page
+    .getByLabel("留守人資料(請展開填寫資料)")
+    .getByRole("textbox", { name: isYushan ? "請輸入姓名" : "留守人手機" })
+    .fill(watcher.name);
+  await page
+    .getByLabel("留守人資料(請展開填寫資料)")
+    .getByRole("textbox", { name: isYushan ? "請輸入手機(或電話)" : "留守人手機" })
+    .fill(watcher.mobilePhone);
+  if (!isYushan) await page.getByRole("textbox", { name: "留守人電話" }).fill(watcher.homePhone || watcher.mobilePhone);
+  await page.locator("#con_stay_email").fill(watcher.email);
   await page.evaluate(
     ({ watcher }) => {
       document.querySelector('input[name="ctl00$con$stay_birthday"]').value = watcher.birthday;
@@ -180,7 +201,10 @@ async function apply() {
   /**
    *
    */
-  await page.getByRole("button", { name: "下一步" }).click();
+  try {
+    await page.locator("#con_cbOneMan").check();
+  } catch (error) {}
+  await page.locator("#con_btnToStep31").click();
   await page.evaluate(() => {
     document.documentElement.style.transform = "scale(0.5)";
     document.documentElement.style.transformOrigin = "top left";
