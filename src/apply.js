@@ -25,7 +25,19 @@ const promptUserInput = (promptText) => {
 
 const submit = async (page) => {
   if (!shouldSubmit) return;
-  while (true) {
+
+  /**
+   * auto fill captcha
+   while (true) {
+    const now = new Date();
+    const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const cutoffSeconds = 15 * 3600 + 59 * 60 + 30; // 15:59:30
+    if (currentSeconds < cutoffSeconds) {
+      console.log(`Waiting... Current time: ${now.toTimeString().split(" ")[0]}`);
+      await new Promise((res) => setTimeout(res, 1000));
+      continue;
+    }
+
     await page.locator(".fa-sync-alt").click();
     // console.log(`${index + 1}th try...`);
     const captchaElement = await page.locator("#con_imgcode");
@@ -46,11 +58,14 @@ const submit = async (page) => {
       break;
     }
   }
+   */
+
+  await new Promise((res) => setTimeout(res, 500));
   await page.locator("#con_btnsave").click();
 };
 
 async function apply() {
-  const { org, route, destination, numOfDays, plan, members, watcher } = data;
+  const { org, teamName, route, destination, numOfDays, plan, members, watcher } = data;
   const isYushan = org === "玉山國家公園管理處";
   let { startDate } = data;
 
@@ -111,9 +126,8 @@ async function apply() {
   /**
    *
    */
-  await page
-    .getByRole("textbox", { name: isYushan ? "請輸入隊名" : "隊伍名稱" })
-    .fill(`${leader.name}-${route}-${startDate}-${numOfDays}days`);
+  await page.getByRole("textbox", { name: isYushan ? "請輸入隊名" : "隊伍名稱" }).fill(`${teamName}-${startDate}`);
+  // .fill(`${leader.name}-${route}-${startDate}-${numOfDays}days`);
 
   await page.locator("#con_sumday").selectOption(String(numOfDays));
   await page.locator("#con_applystart").selectOption(startDate);
@@ -246,6 +260,8 @@ async function apply() {
   /**
    *
    */
+  // Wait for user to manually fill the code and press Enter in CLI
+  await promptUserInput("請在網頁上手動輸入驗證碼，完成後請按 Enter 以繼續提交...\n");
   await submit(page);
 }
 
