@@ -4,6 +4,7 @@ const routeSelect = document.querySelector("#route");
 const startDateInput = document.querySelector("#start-date");
 const memberFileInput = document.querySelector("#member-file");
 const memberStatusElement = document.querySelector("#member-status");
+const ROUTE_KEY = "selectedRoute";
 const START_DATE_KEY = "selectedStartDate";
 const MEMBER_DATA_KEY = "selectedMemberData";
 const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
@@ -32,13 +33,21 @@ function validateMemberData(data) {
 }
 
 async function loadRoutes() {
-  const response = await fetch(chrome.runtime.getURL("routes.json"));
+  const [response, saved] = await Promise.all([
+    fetch(chrome.runtime.getURL("routes.json")),
+    chrome.storage.local.get(ROUTE_KEY),
+  ]);
   const routes = await response.json();
   for (const route of routes) {
     const option = document.createElement("option");
     option.value = route.id;
     option.textContent = `${route.label} · ${route.numOfDays} 天`;
     routeSelect.append(option);
+  }
+  const savedRoute = saved[ROUTE_KEY];
+  routeSelect.value = routes.some(({ id }) => id === savedRoute) ? savedRoute : "";
+  if (savedRoute && !routeSelect.value) {
+    await chrome.storage.local.remove(ROUTE_KEY);
   }
   routesLoaded = true;
   updateStartButton();
@@ -84,7 +93,12 @@ memberFileInput.addEventListener("change", async () => {
   }
 });
 
-routeSelect.addEventListener("change", updateStartButton);
+routeSelect.addEventListener("change", async () => {
+  await chrome.storage.local.set({
+    [ROUTE_KEY]: routeSelect.value,
+  });
+  updateStartButton();
+});
 startDateInput.addEventListener("input", async () => {
   await chrome.storage.local.set({
     [START_DATE_KEY]: startDateInput.value,
