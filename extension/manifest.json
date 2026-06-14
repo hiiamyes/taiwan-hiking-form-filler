@@ -24,6 +24,7 @@
       ],
       "js": [
         "helpers.js",
+        "steps.js",
         "content.js"
       ],
       "run_at": "document_idle"
