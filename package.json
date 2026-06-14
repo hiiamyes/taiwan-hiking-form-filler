@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test": "node --test"
+    "test": "node --test test/background.test.js test/route-step.test.js test/routes.test.js",
+    "test:live": "node --test test/route-step.live.test.js"
   },
   "dependencies": {
     "playwright": "^1.52.0",
