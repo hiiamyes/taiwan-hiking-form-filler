@@ -9,8 +9,11 @@
   <body>
     <main>
       <h1>登山申請自動填表</h1>
-      <p>使用 extension/application.json 開始填寫。</p>
-      <button id="start" type="button">Start</button>
+      <label for="route">路線</label>
+      <select id="route"></select>
+      <label for="start-date">入園日期</label>
+      <input id="start-date" type="date" />
+      <button id="start" type="button" disabled>Start</button>
       <p id="status" role="status" aria-live="polite"></p>
     </main>
     <script src="popup.js"></script>
