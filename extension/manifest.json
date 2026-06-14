@@ -23,6 +23,7 @@
         "https://hike.taiwan.gov.tw/*"
       ],
       "js": [
+        "helpers.js",
         "content.js"
       ],
       "run_at": "document_idle"
