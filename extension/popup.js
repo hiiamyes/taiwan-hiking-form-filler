@@ -3,6 +3,7 @@ const statusElement = document.querySelector("#status");
 const routeSelect = document.querySelector("#route");
 const startDateInput = document.querySelector("#start-date");
 const memberFileInput = document.querySelector("#member-file");
+const START_DATE_KEY = "selectedStartDate";
 let memberData = null;
 let routesLoaded = false;
 
@@ -40,6 +41,12 @@ async function loadRoutes() {
   updateStartButton();
 }
 
+async function loadSavedStartDate() {
+  const saved = await chrome.storage.local.get(START_DATE_KEY);
+  startDateInput.value = saved[START_DATE_KEY] || "";
+  updateStartButton();
+}
+
 memberFileInput.addEventListener("change", async () => {
   memberData = null;
   updateStartButton();
@@ -58,7 +65,12 @@ memberFileInput.addEventListener("change", async () => {
 });
 
 routeSelect.addEventListener("change", updateStartButton);
-startDateInput.addEventListener("input", updateStartButton);
+startDateInput.addEventListener("input", async () => {
+  await chrome.storage.local.set({
+    [START_DATE_KEY]: startDateInput.value,
+  });
+  updateStartButton();
+});
 
 startButton.addEventListener("click", async () => {
   if (!routeSelect.value) {
@@ -94,7 +106,7 @@ startButton.addEventListener("click", async () => {
   }
 });
 
-loadRoutes().catch((error) => {
+Promise.all([loadRoutes(), loadSavedStartDate()]).catch((error) => {
   statusElement.textContent = `錯誤：${error.message}`;
   startButton.disabled = true;
 });
