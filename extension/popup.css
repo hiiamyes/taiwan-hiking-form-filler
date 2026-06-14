@@ -68,3 +68,9 @@ button:disabled {
   min-height: 18px;
   margin: 12px 0 0;
 }
+
+.field-status {
+  margin: -8px 0 14px;
+  color: #526057;
+  font-size: 12px;
+}

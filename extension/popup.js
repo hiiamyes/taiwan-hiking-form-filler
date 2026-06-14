@@ -3,7 +3,10 @@ const statusElement = document.querySelector("#status");
 const routeSelect = document.querySelector("#route");
 const startDateInput = document.querySelector("#start-date");
 const memberFileInput = document.querySelector("#member-file");
+const memberStatusElement = document.querySelector("#member-status");
 const START_DATE_KEY = "selectedStartDate";
+const MEMBER_DATA_KEY = "selectedMemberData";
+const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
 let memberData = null;
 let routesLoaded = false;
 
@@ -47,20 +50,37 @@ async function loadSavedStartDate() {
   updateStartButton();
 }
 
-memberFileInput.addEventListener("change", async () => {
-  memberData = null;
+async function loadSavedMemberData() {
+  const saved = await chrome.storage.local.get([MEMBER_DATA_KEY, MEMBER_FILE_NAME_KEY]);
+  if (!saved[MEMBER_DATA_KEY]) return;
+
+  try {
+    memberData = validateMemberData(saved[MEMBER_DATA_KEY]);
+    memberStatusElement.textContent = `使用已儲存資料：${saved[MEMBER_FILE_NAME_KEY] || "成員資料"}`;
+  } catch {
+    await chrome.storage.local.remove([MEMBER_DATA_KEY, MEMBER_FILE_NAME_KEY]);
+    memberData = null;
+  }
   updateStartButton();
+}
+
+memberFileInput.addEventListener("change", async () => {
   const [file] = memberFileInput.files;
   if (!file) return;
 
   try {
-    memberData = validateMemberData(JSON.parse(await file.text()));
-    statusElement.textContent = `已選擇：${file.name}`;
+    const importedMemberData = validateMemberData(JSON.parse(await file.text()));
+    await chrome.storage.local.set({
+      [MEMBER_DATA_KEY]: importedMemberData,
+      [MEMBER_FILE_NAME_KEY]: file.name,
+    });
+    memberData = importedMemberData;
+    memberStatusElement.textContent = `使用已儲存資料：${file.name}`;
+    statusElement.textContent = "";
     updateStartButton();
   } catch (error) {
     memberFileInput.value = "";
     statusElement.textContent = `錯誤：${error.message}`;
-    updateStartButton();
   }
 });
 
@@ -106,7 +126,7 @@ startButton.addEventListener("click", async () => {
   }
 });
 
-Promise.all([loadRoutes(), loadSavedStartDate()]).catch((error) => {
+Promise.all([loadRoutes(), loadSavedStartDate(), loadSavedMemberData()]).catch((error) => {
   statusElement.textContent = `錯誤：${error.message}`;
   startButton.disabled = true;
 });
