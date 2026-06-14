@@ -67,6 +67,8 @@ button:disabled {
 #status {
   min-height: 18px;
   margin: 12px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .field-status {

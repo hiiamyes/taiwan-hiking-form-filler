@@ -8,6 +8,7 @@ const ROUTE_KEY = "selectedRoute";
 const START_DATE_KEY = "selectedStartDate";
 const MEMBER_DATA_KEY = "selectedMemberData";
 const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
+const SESSION_KEY = "hikingFormFiller";
 let memberData = null;
 let routesLoaded = false;
 
@@ -71,6 +72,20 @@ async function loadSavedMemberData() {
     memberData = null;
   }
   updateStartButton();
+}
+
+async function loadWorkflowError() {
+  const saved = await chrome.storage.session.get(SESSION_KEY);
+  const error = saved[SESSION_KEY]?.error;
+  if (!error) return;
+
+  statusElement.textContent = [
+    `停在：${error.stageLabel || error.stage || "未知步驟"}`,
+    `原因：${error.reason || error}`,
+    error.url ? `頁面：${error.url}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 memberFileInput.addEventListener("change", async () => {
@@ -140,7 +155,12 @@ startButton.addEventListener("click", async () => {
   }
 });
 
-Promise.all([loadRoutes(), loadSavedStartDate(), loadSavedMemberData()]).catch((error) => {
+Promise.all([
+  loadRoutes(),
+  loadSavedStartDate(),
+  loadSavedMemberData(),
+  loadWorkflowError(),
+]).catch((error) => {
   statusElement.textContent = `錯誤：${error.message}`;
   startButton.disabled = true;
 });

@@ -36,6 +36,7 @@ async function startApplication(routeId, startDate, memberData) {
       tabId: tab.id,
       stage: "route",
       application,
+      error: null,
     },
   });
   await chrome.tabs.update(tab.id, { url: START_URL });

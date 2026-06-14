@@ -47,13 +47,6 @@ async function run() {
       stage: "error",
       error: details,
     });
-    alert(
-      [
-        `自動填表停在：${details.stageLabel}`,
-        `原因：${details.reason}`,
-        `頁面：${details.url}`,
-      ].join("\n"),
-    );
   }
 }
 
