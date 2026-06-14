@@ -56,12 +56,12 @@ node src/apply.js
 The `extension/` directory is a direct Chrome-extension version of
 `src/apply.js`.
 
-1. Update `extension/application.json` with the application to fill.
+1. Prepare a JSON file containing `watcher` and `members`.
 2. Open `chrome://extensions`, enable **Developer mode**, and click
    **Load unpacked**.
 3. Select the repository's `extension/` directory.
-4. Click the extension icon, select a route and start date, then click **Start**
-   to open the hiking application and start filling.
+4. Click the extension icon, select a route, start date, and member JSON file,
+   then click **Start** to open the hiking application and start filling.
 
 The extension stops on the final review page. Review the form, enter the
 CAPTCHA, and submit it manually.

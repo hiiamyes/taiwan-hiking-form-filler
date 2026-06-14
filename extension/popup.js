@@ -2,6 +2,24 @@ const startButton = document.querySelector("#start");
 const statusElement = document.querySelector("#status");
 const routeSelect = document.querySelector("#route");
 const startDateInput = document.querySelector("#start-date");
+const memberFileInput = document.querySelector("#member-file");
+let memberData = null;
+
+function validateMemberData(data) {
+  if (!data?.watcher || typeof data.watcher !== "object") {
+    throw new Error("成員檔案缺少 watcher");
+  }
+  if (!Array.isArray(data.members) || data.members.length === 0) {
+    throw new Error("成員檔案缺少 members");
+  }
+  if (data.members.filter(({ leader }) => leader).length !== 1) {
+    throw new Error("成員檔案必須有一位領隊");
+  }
+  return {
+    watcher: data.watcher,
+    members: data.members,
+  };
+}
 
 async function loadRoutes() {
   const response = await fetch(chrome.runtime.getURL("routes.json"));
@@ -15,9 +33,27 @@ async function loadRoutes() {
   startButton.disabled = false;
 }
 
+memberFileInput.addEventListener("change", async () => {
+  memberData = null;
+  const [file] = memberFileInput.files;
+  if (!file) return;
+
+  try {
+    memberData = validateMemberData(JSON.parse(await file.text()));
+    statusElement.textContent = `已選擇：${file.name}`;
+  } catch (error) {
+    memberFileInput.value = "";
+    statusElement.textContent = `錯誤：${error.message}`;
+  }
+});
+
 startButton.addEventListener("click", async () => {
   if (!startDateInput.value) {
     statusElement.textContent = "請選擇入園日期";
+    return;
+  }
+  if (!memberData) {
+    statusElement.textContent = "請選擇成員 JSON 檔案";
     return;
   }
 
@@ -29,6 +65,7 @@ startButton.addEventListener("click", async () => {
       type: "START_APPLICATION",
       routeId: routeSelect.value,
       startDate: startDateInput.value,
+      memberData,
     });
     if (!response?.ok) {
       throw new Error(response?.error || "無法開始");
