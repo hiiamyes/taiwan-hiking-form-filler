@@ -1,0 +1,49 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 280px;
+  background: #f5f7f2;
+  color: #172018;
+}
+
+main {
+  padding: 18px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+p {
+  margin: 0 0 16px;
+  color: #526057;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #176b3a;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+#status {
+  min-height: 18px;
+  margin: 12px 0 0;
+}

@@ -11,7 +11,8 @@
     "https://hike.taiwan.gov.tw/*"
   ],
   "action": {
-    "default_title": "Fill Taiwan hiking application"
+    "default_title": "Fill Taiwan hiking application",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
