@@ -1,0 +1,35 @@
+{
+  "org": "玉山國家公園管理處",
+  "teamName": "yes1",
+  "route": "2~5天(塔塔加 - 玉山線 - 塔塔加)",
+  "destination": "玉山群峰(嘉義縣-阿里山鄉)",
+  "numOfDays": 2,
+  "startDate": "2025-07-18",
+  "plan": [
+    { "spots": ["排雲登山服務中心", "塔塔加登山口", "排雲山莊"] },
+    { "spots": ["玉山主峰", "玉山東峰", "排雲山莊", "塔塔加登山口", "排雲登山服務中心"] }
+  ],
+  "watcher": {
+    "name": "李安定",
+    "homePhone": "0226862526",
+    "mobilePhone": "0952223045",
+    "birthday": "1961-01-02",
+    "email": "joshuayes@gmail.com"
+  },
+  "members": [
+    {
+      "leader": true,
+      "name": "李宗燁",
+      "idNumber": "F127332570",
+      "homePhone": "0226862526",
+      "mobilePhone": "0972437039",
+      "birthday": "1989-02-11",
+      "city": "新北市",
+      "district": "樹林區",
+      "addressDetail": "中山路一段128號8樓",
+      "email": "joshuayes@gmail.com",
+      "emergencyContactName": "李安定",
+      "emergencyContactPhone": "0952223045"
+    }
+  ]
+}
