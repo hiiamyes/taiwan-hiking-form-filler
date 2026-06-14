@@ -24,7 +24,11 @@
       ],
       "js": [
         "helpers.js",
-        "steps.js",
+        "steps/route.js",
+        "steps/agreements.js",
+        "steps/itinerary.js",
+        "steps/people.js",
+        "steps/index.js",
         "content.js"
       ],
       "run_at": "document_idle"

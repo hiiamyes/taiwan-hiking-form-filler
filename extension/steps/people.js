@@ -1,89 +1,6 @@
 (function (root) {
-  const {
-    byText,
-    check,
-    click,
-    clickableByText,
-    fill,
-    input,
-    inputByText,
-    select,
-    sleep,
-    textOf,
-    waitFor,
-  } = root.HikingFormHelpers;
-
-  async function handleRoute(data, updateSession) {
-    await click(() => clickableByText(data.org, true), data.org);
-    const routeText = await waitFor(() => byText(data.route, { exact: true }), data.route);
-    const container = routeText.closest("tr, li, div") || routeText.parentElement;
-    await updateSession({ stage: "agreements" });
-    await click(
-      () => container?.querySelector("a") || clickableByText("進入申請"),
-      "進入申請",
-    );
-  }
-
-  async function handleAgreements(_data, updateSession) {
-    for (const checkbox of document.querySelectorAll('input[type="checkbox"]:not(:disabled)')) {
-      if (!checkbox.checked) checkbox.click();
-    }
-    await updateSession({ stage: "itinerary" });
-    await click(() => clickableByText("同意", true), "同意");
-  }
-
-  function radioForSpot(spot) {
-    const label = [...document.querySelectorAll("label")].find((item) =>
-      textOf(item).toLowerCase().includes(spot.toLowerCase()),
-    );
-    if (label?.htmlFor) return document.getElementById(label.htmlFor);
-    return label?.querySelector('input[type="radio"]') || null;
-  }
-
-  async function handleItinerary(data, updateSession) {
-    const isYushan = data.org === "玉山國家公園管理處";
-    const isTaroko = data.org === "太魯閣國家公園管理處";
-
-    const notice = [...document.querySelectorAll('input[type="checkbox"]')].find((item) =>
-      textOf(item.closest("label, tr, div")).includes("已詳閱以下說明"),
-    );
-    if (notice && !notice.checked) notice.click();
-
-    if (!isTaroko) {
-      await fill(
-        () => inputByText(isYushan ? "請輸入隊名" : "隊伍名稱"),
-        `${data.teamName || ""}-${data.startDate}`,
-        "隊伍名稱",
-      );
-    }
-
-    await select(
-      () => document.querySelector(isTaroko ? "#con_step1_sumday" : "#con_sumday"),
-      data.numOfDays,
-      "行程天數",
-    );
-    await select(
-      () => document.querySelector(isTaroko ? "#con_step1_applystart" : "#con_applystart"),
-      data.startDate,
-      "入園日期",
-    );
-
-    for (const day of data.plan) {
-      for (const spot of day.spots) {
-        await check(() => radioForSpot(spot), spot);
-        await sleep(1000);
-      }
-      await click(() => clickableByText("完成路線"), "完成路線");
-      await sleep(1000);
-    }
-
-    if (data.destination) {
-      await select(() => document.querySelector("#con_NpaPlacesInfo"), data.destination, "目的地");
-    }
-
-    await updateSession({ stage: "people" });
-    await click(() => clickableByText("下一步", true), "下一步");
-  }
+  const { byText, check, click, clickableByText, fill, input, select, sleep, textOf } =
+    root.HikingFormHelpers;
 
   async function fillAddress(prefix, person, fallback = {}) {
     await fill(() => input(prefix.name, fallback.name), person.name, `${prefix.name} 姓名`);
@@ -128,7 +45,8 @@
     );
   }
 
-  async function handlePeople(data, updateSession) {
+  root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
+  root.HikingFormStepHandlers.people = async function people(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
     const isTaroko = data.org === "太魯閣國家公園管理處";
     const leader = data.members.find((member) => member.leader);
@@ -270,12 +188,5 @@
 
     await updateSession({ stage: "final" });
     await click(() => document.querySelector("#con_btnToStep31"), "前往最後確認頁");
-  }
-
-  root.HikingFormSteps = {
-    agreements: handleAgreements,
-    itinerary: handleItinerary,
-    people: handlePeople,
-    route: handleRoute,
   };
 })(globalThis);
