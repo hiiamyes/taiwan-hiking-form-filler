@@ -1,22 +1,37 @@
 (function (root) {
-  const { byText, click, clickableByText, textOf, waitFor } = root.HikingFormHelpers;
+  const { byText, click, textOf, waitFor } = root.HikingFormHelpers;
 
-  function applicationLinkForRoute(routeText) {
-    const container = routeText.parentElement?.parentElement;
-    return [...(container?.querySelectorAll("a") || [])].find((link) =>
-      textOf(link).includes("進入申請"),
+  function organizationButton(org) {
+    return byText(org, {
+      exact: true,
+      selector: "button, input[type=button], input[type=submit]",
+    });
+  }
+
+  function applicationLinkForVisibleRoute(route) {
+    const routeTexts = [...document.querySelectorAll("*")].filter(
+      (element) => textOf(element) === route && element.getClientRects().length > 0,
     );
+
+    for (const routeText of routeTexts) {
+      const container = routeText.parentElement?.parentElement;
+      const link = [...(container?.querySelectorAll("a") || [])].find((item) =>
+        textOf(item).includes("進入申請"),
+      );
+      if (link) return link;
+    }
+
+    return null;
   }
 
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.route = async function route(data, updateSession) {
-    await click(() => clickableByText(data.org, true), data.org);
-    const routeText = await waitFor(() => byText(data.route, { exact: true }), data.route);
+    await click(() => organizationButton(data.org), `管理處：${data.org}`);
     const applicationLink = await waitFor(
-      () => applicationLinkForRoute(routeText),
-      `${data.route} 的進入申請連結`,
+      () => applicationLinkForVisibleRoute(data.route),
+      `${data.org} / ${data.route} 的進入申請連結`,
     );
     await updateSession({ stage: "agreements" });
-    await click(applicationLink, `${data.route} 的進入申請連結`);
+    await click(applicationLink, `${data.org} / ${data.route} 的進入申請連結`);
   };
 })(globalThis);
