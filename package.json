@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node --test test/background.test.js test/route-step.test.js test/routes.test.js",
+    "test": "node --test test/background.test.js test/itinerary-step.test.js test/route-step.test.js test/routes.test.js",
     "test:live": "node --test test/route-step.live.test.js"
   },
   "dependencies": {

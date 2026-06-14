@@ -1,5 +1,5 @@
 (function (root) {
-  const { check, click, clickableByText, fill, inputByText, select, sleep, textOf } =
+  const { check, click, clickableByText, fill, inputByText, select, sleep, textOf, waitFor } =
     root.HikingFormHelpers;
 
   function radioForSpot(spot) {
@@ -8,6 +8,19 @@
     );
     if (label?.htmlFor) return document.getElementById(label.htmlFor);
     return label?.querySelector('input[type="radio"]') || null;
+  }
+
+  function currentDayIndex() {
+    const value = document.querySelector('[id$="hidnowday"]')?.value;
+    return value ? Number(value) - 1 : -1;
+  }
+
+  function itineraryIsConfigured(data, isTaroko) {
+    const dayCount = document.querySelector(isTaroko ? "#con_step1_sumday" : "#con_sumday");
+    const startDate = document.querySelector(
+      isTaroko ? "#con_step1_applystart" : "#con_applystart",
+    );
+    return dayCount?.value === String(data.numOfDays) && startDate?.value === data.startDate;
   }
 
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
@@ -20,32 +33,54 @@
     );
     if (notice && !notice.checked) notice.click();
 
-    if (!isTaroko) {
-      await fill(
-        () => inputByText(isYushan ? "請輸入隊名" : "隊伍名稱"),
-        `${data.teamName || ""}-${data.startDate}`,
-        "隊伍名稱",
+    if (!itineraryIsConfigured(data, isTaroko)) {
+      if (!isTaroko) {
+        await fill(
+          () => inputByText(isYushan ? "請輸入隊名" : "隊伍名稱"),
+          `${data.teamName || ""}-${data.startDate}`,
+          "隊伍名稱",
+        );
+      }
+
+      await select(
+        () => document.querySelector(isTaroko ? "#con_step1_sumday" : "#con_sumday"),
+        data.numOfDays,
+        "行程天數",
+      );
+      await select(
+        () => document.querySelector(isTaroko ? "#con_step1_applystart" : "#con_applystart"),
+        data.startDate,
+        "入園日期",
       );
     }
 
-    await select(
-      () => document.querySelector(isTaroko ? "#con_step1_sumday" : "#con_sumday"),
-      data.numOfDays,
-      "行程天數",
-    );
-    await select(
-      () => document.querySelector(isTaroko ? "#con_step1_applystart" : "#con_applystart"),
-      data.startDate,
-      "入園日期",
-    );
+    let dayIndex =
+      (await waitFor(
+        () => {
+          const index = currentDayIndex();
+          return index >= 0 ? index + 1 : null;
+        },
+        "目前行程天數",
+      )) - 1;
 
-    for (const day of data.plan) {
+    for (; dayIndex < data.plan.length; dayIndex++) {
+      const day = data.plan[dayIndex];
       for (const spot of day.spots) {
         await check(() => radioForSpot(spot), spot);
         await sleep(1000);
       }
       await click(() => clickableByText("完成路線"), "完成路線");
-      await sleep(1000);
+      if (dayIndex < data.plan.length - 1) {
+        await waitFor(
+          () => (currentDayIndex() > dayIndex ? true : null),
+          `第${dayIndex + 2}天行程`,
+        );
+      } else {
+        await waitFor(
+          () => (clickableByText("完成路線") ? null : true),
+          "完成所有路線",
+        );
+      }
     }
 
     if (data.destination) {
