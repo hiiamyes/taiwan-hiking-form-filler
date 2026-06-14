@@ -61,10 +61,14 @@ The `extension/` directory is a direct Chrome-extension version of
    **Load unpacked**.
 3. Select the repository's `extension/` directory.
 4. Click the extension icon, select a route, start date, and member JSON file,
-   then click **Start** to open the hiking application and start filling.
+   then click **Start** to open the hiking application in the current tab and
+   start filling.
 
 The selected date and imported member data are stored locally by the extension
 and reused until they are changed or a new valid member file is imported.
 
 The extension stops on the final review page. Review the form, enter the
 CAPTCHA, and submit it manually.
+
+If filling stops, the error message identifies the failed workflow step, the
+reason, and the page URL.

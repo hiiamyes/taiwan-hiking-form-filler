@@ -1,5 +1,11 @@
 const SESSION_KEY = "hikingFormFiller";
 const steps = globalThis.HikingFormSteps;
+const STAGE_LABELS = {
+  agreements: "同意注意事項",
+  itinerary: "填寫路線行程",
+  people: "填寫申請人、隊員與留守人",
+  route: "選擇管理處與路線",
+};
 
 async function updateSession(patch) {
   const stored = await chrome.storage.session.get(SESSION_KEY);
@@ -27,9 +33,27 @@ async function run() {
       console.info("Taiwan Hiking Form Filler: 請手動確認資料、輸入驗證碼並送出。");
     }
   } catch (error) {
-    console.error("Taiwan Hiking Form Filler failed:", error);
-    await updateSession({ active: false, stage: "error", error: error.message });
-    alert(`自動填表失敗：${error.message}`);
+    const failedStage = session.stage;
+    const reason = error?.message || String(error);
+    const details = {
+      stage: failedStage,
+      stageLabel: STAGE_LABELS[failedStage] || failedStage,
+      url: location.href,
+      reason,
+    };
+    console.error("Taiwan Hiking Form Filler failed:", details, error);
+    await updateSession({
+      active: false,
+      stage: "error",
+      error: details,
+    });
+    alert(
+      [
+        `自動填表停在：${details.stageLabel}`,
+        `原因：${details.reason}`,
+        `頁面：${details.url}`,
+      ].join("\n"),
+    );
   }
 }
 

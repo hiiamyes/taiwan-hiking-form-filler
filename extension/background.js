@@ -27,7 +27,9 @@ async function startApplication(routeId, startDate, memberData) {
     members: memberData.members,
   };
 
-  const tab = await chrome.tabs.create({ url: "about:blank" });
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) throw new Error("找不到目前分頁");
+
   await chrome.storage.session.set({
     [SESSION_KEY]: {
       active: true,
