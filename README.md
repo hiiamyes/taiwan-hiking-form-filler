@@ -50,3 +50,17 @@ npx playwright install
 cp src/application.sample.json src/application.json
 node src/apply.js
 ```
+
+## Chrome extension
+
+The `extension/` directory is a direct Chrome-extension version of
+`src/apply.js`.
+
+1. Update `extension/application.json` with the application to fill.
+2. Open `chrome://extensions`, enable **Developer mode**, and click
+   **Load unpacked**.
+3. Select the repository's `extension/` directory.
+4. Click the extension icon to open the hiking application and start filling.
+
+The extension stops on the final review page. Review the form, enter the
+CAPTCHA, and submit it manually.

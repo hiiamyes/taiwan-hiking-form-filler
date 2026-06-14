@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Taiwan Hiking Form Filler",
   "version": "0.1.0",
-  "description": "Starts a bundled Taiwan hiking application workflow.",
+  "description": "Chrome extension version of src/apply.js.",
   "permissions": [
     "storage",
     "tabs"
@@ -11,7 +11,7 @@
     "https://hike.taiwan.gov.tw/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Fill Taiwan hiking application"
   },
   "background": {
     "service_worker": "background.js"
@@ -23,17 +23,8 @@
       ],
       "js": [
         "content.js"
-      ]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "templates/*.json"
       ],
-      "matches": [
-        "https://hike.taiwan.gov.tw/*"
-      ]
+      "run_at": "document_idle"
     }
   ]
 }
