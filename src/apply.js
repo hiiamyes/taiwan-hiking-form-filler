@@ -7,6 +7,7 @@ const Tesseract = require("tesseract.js");
 
 const data = require("./application.json");
 const shouldSubmit = process.argv.includes("--submit");
+let isMemberDialogConsumed = false;
 
 const promptUserInput = (promptText) => {
   const rl = readline.createInterface({
@@ -67,6 +68,7 @@ const submit = async (page) => {
 async function apply() {
   const { org, teamName, route, destination, numOfDays, plan, members, watcher } = data;
   const isYushan = org === "玉山國家公園管理處";
+  const isTaroko = org === "太魯閣國家公園管理處";
   let { startDate } = data;
 
   const leader = members.find(({ leader }) => leader);
@@ -82,6 +84,9 @@ async function apply() {
   const page = await context.newPage();
   page.on("dialog", async (dialog) => {
     console.log(`Dialog message: ${dialog.message()}`);
+    if (dialog.message().includes("請詳實填寫隊員資料勿重覆")) {
+      isMemberDialogConsumed = true;
+    }
     dialog.dismiss().catch(() => {});
     await submit(page);
   });
@@ -110,6 +115,7 @@ async function apply() {
     "進入原住民族傳統領域須知： 1",
     "入園申請隊員若具有學生身分或參加學校社團活動，請務必自行通報學校相關單位，作為緊急應變之用。",
     "本人已閱讀並充分瞭解上述注意事項，並會遵守國家公園、警政署各項規定。",
+    "請確認您的隊伍是否符合「南投縣登山活動管理自治條例」、「臺中市登山活動管理自治條例」、「花蓮縣登山活動管理自治條例」內載相關規定，以免觸法。",
   ];
   for (let i = 0; i < agreements.length; i++) {
     const row = page.getByRole("row", { name: agreements[i] });
@@ -121,24 +127,61 @@ async function apply() {
       continue;
     }
   }
+  // taroko
+  try {
+    await page.locator('[id="chk[]"]').check();
+  } catch (error) {
+    //
+  }
   await page.getByRole("button", { name: "同意", exact: true }).click();
 
   /**
    *
    */
-  await page.getByRole("textbox", { name: isYushan ? "請輸入隊名" : "隊伍名稱" }).fill(`${teamName}-${startDate}`);
-  // .fill(`${leader.name}-${route}-${startDate}-${numOfDays}days`);
+  try {
+    await page
+      .getByRole("checkbox", {
+        name: "已詳閱以下說明，並同意相關注意事項。 奇萊主北線與奇萊連峰線為(共同承載量)(114年7月1日起不分平假日，統一開放40人)。自109年2月21",
+      })
+      .check();
+  } catch (error) {
+    //
+  }
 
-  await page.locator("#con_sumday").selectOption(String(numOfDays));
-  await page.locator("#con_applystart").selectOption(startDate);
+  if (!isTaroko) {
+    await page.getByRole("textbox", { name: isYushan ? "請輸入隊名" : "隊伍名稱" }).fill(`${teamName}-${startDate}`);
+  }
+
+  /**
+   *
+   */
+  if (isTaroko) {
+    await page.locator("#con_step1_sumday").selectOption(String(numOfDays));
+    await page.locator("#con_step1_applystart").selectOption(startDate);
+  } else {
+    await page.locator("#con_sumday").selectOption(String(numOfDays));
+    await page.locator("#con_applystart").selectOption(startDate);
+  }
+
+  /**
+   *
+   */
   for (let i = 0; i < plan.length; i++) {
     const day = plan[i];
-    if (i > 0) await page.getByText(`第${i + 1}天行程`).waitFor({ state: "visible" });
+    if (i > 0) {
+      if (isTaroko) {
+        await page.getByText(`第：${i + 1}天行程`).waitFor({ state: "visible" });
+      } else {
+        await page.getByText(`第${i + 1}天行程`).waitFor({ state: "visible" });
+      }
+    }
     for (const spot of day.spots) {
       await page.getByRole("radio", { name: new RegExp(spot, "i") }).check();
+      await page.waitForTimeout(1000);
     }
     await page.waitForTimeout(1000);
     await page.getByRole("link", { name: "  完成路線" }).click();
+    await page.waitForTimeout(1000);
   }
   await page.getByText("請選擇下一個地點：").waitFor({ state: "hidden" });
   if (destination) await page.locator("#con_NpaPlacesInfo").selectOption(destination);
@@ -152,39 +195,72 @@ async function apply() {
       name: "請確認領隊或隊員同意委託申請人代理蒐集當事人個人資料，並委託其上網向國家公園管理處提出登山申請相關事宜，以免違反相關法令。",
     })
     .check();
-  await page.getByRole("textbox", { name: isYushan ? "請輸入姓名" : "申請人姓名" }).fill(leader.name);
+  await page.waitForTimeout(5000);
+  await page.getByRole("textbox", { name: isYushan || isTaroko ? "請輸入姓名" : "申請人姓名" }).fill(leader.name);
   await page
-    .getByRole("textbox", { name: isYushan ? "請輸入電話" : "申請人電話" })
+    .getByRole("textbox", { name: isYushan || isTaroko ? "請輸入電話" : "申請人電話" })
     .fill(leader.homePhone || leader.mobilePhone);
-  await page.locator("#con_ddlapply_country").selectOption({ label: leader.city });
-  await page.locator("#con_ddlapply_city").selectOption({ label: leader.district });
-  await page.getByRole("textbox", { name: isYushan ? "請輸入地址" : "申請人地址" }).fill(leader.addressDetail);
-  await page.getByRole("textbox", { name: isYushan ? "請輸入手機" : "申請人手機" }).fill(leader.mobilePhone);
-  await page.getByRole("textbox", { name: isYushan ? "請輸入電子郵件" : "申請人電子郵件" }).fill(leader.email);
-  await page.locator("#con_apply_nation").selectOption("中華民國");
+
+  if (isTaroko) {
+    await page.locator("#con_step2_ddlapply_country").selectOption(leader.city);
+  } else {
+    await page.locator("#con_ddlapply_country").selectOption({ label: leader.city });
+  }
+
+  if (isTaroko) {
+    await page.locator("#con_step2_ddlapply_city").selectOption(leader.district);
+  } else {
+    await page.locator("#con_ddlapply_city").selectOption({ label: leader.district });
+  }
+
+  await page
+    .getByRole("textbox", { name: isYushan || isTaroko ? "請輸入地址" : "申請人地址" })
+    .fill(leader.addressDetail);
+  await page
+    .getByRole("textbox", { name: isYushan || isTaroko ? "請輸入手機" : "申請人手機" })
+    .fill(leader.mobilePhone);
+  await page
+    .getByRole("textbox", { name: isYushan || isTaroko ? "請輸入電子郵件" : "申請人電子郵件" })
+    .fill(leader.email);
+  await page.locator(isTaroko ? "#con_step2_apply_nation" : "#con_apply_nation").selectOption("中華民國");
   await page.waitForLoadState("networkidle");
-  await page.getByRole("textbox", { name: isYushan ? "請輸入證號" : "申請人證號" }).fill(leader.idNumber);
+  await page.getByRole("textbox", { name: isYushan || isTaroko ? "請輸入證號" : "申請人證號" }).fill(leader.idNumber);
   await page.evaluate(
-    ({ leader }) => {
-      document.querySelector('input[name="ctl00$con$apply_birthday"]').value = leader.birthday;
+    ({ leader, isTaroko }) => {
+      document.querySelector(
+        isTaroko ? 'input[name="ctl00$con$step2$apply_birthday"]' : 'input[name="ctl00$con$apply_birthday"]'
+      ).value = leader.birthday;
     },
-    { leader }
+    { leader, isTaroko }
   );
+  await page.getByRole("textbox", { name: "緊急聯絡人姓名" }).click();
+  await page.waitForTimeout(2000);
   await page.getByRole("textbox", { name: "緊急聯絡人姓名" }).fill(leader.emergencyContactName);
   await page.getByRole("textbox", { name: "緊急聯絡人電話" }).fill(leader.emergencyContactPhone);
 
   /**
    *
    */
-  await page.getByRole("button", { name: "   領隊資料(請展開填寫資料)" }).click();
+  if (isTaroko) {
+    await page.getByRole("button", { name: "   領隊資料 (請展開填寫資料)" }).click();
+  } else {
+    await page.getByRole("button", { name: "   領隊資料(請展開填寫資料)" }).click();
+  }
   await page.getByRole("checkbox", { name: "同申請人" }).check();
 
   /**
    *
    */
   if (membersWithoutLeader.length > 0) {
-    await page.getByRole("button", { name: "   隊員資料(請展開填寫資料)" }).click();
-    if (!isYushan) await page.locator("#con_member_keytype").check();
+    if (isTaroko) {
+      await page.getByRole("button", { name: "   隊員資料 (請展開填寫資料)" }).click();
+    } else {
+      await page.getByRole("button", { name: "   隊員資料(請展開填寫資料)" }).click();
+    }
+    if (!isYushan) await page.locator(isTaroko ? "#con_step2_member_keytype" : "#con_member_keytype").check();
+    while (!isMemberDialogConsumed) {
+      await page.waitForTimeout(5000);
+    }
     await page.waitForLoadState("networkidle");
   }
   for (let i = 0; i < membersWithoutLeader.length; i++) {
@@ -202,48 +278,109 @@ async function apply() {
       birthday,
     } = membersWithoutLeader[i];
     const label = `No.${i + 1}隊員資料`;
+    console.log(`label: ${label}`, "name: ", name);
     await page.getByRole("link", { name: new RegExp("新增隊員", "i") }).click();
-    await page.getByRole("button", { name: new RegExp(label, "i") }).click();
-    await page.getByLabel(label).getByRole("textbox", { name: "請輸入姓名" }).fill(name);
-    await page.locator(`#con_lisMem_ddlmember_country_${i}`).selectOption({ label: city });
-    await page.locator(`#con_lisMem_ddlmember_city_${i}`).selectOption({ label: district });
-    await page.getByLabel(label).getByRole("textbox", { name: "請輸入地址" }).fill(addressDetail);
-    if (homePhone) await page.getByLabel(label).getByRole("textbox", { name: "請輸入電話" }).fill(homePhone);
-    await page.getByLabel(label).getByRole("textbox", { name: "請輸入手機" }).fill(mobilePhone);
-    await page.getByLabel(label).getByRole("textbox", { name: "請輸入電子郵件" }).fill(email);
-    await page.getByLabel(label).getByRole("textbox", { name: "請輸入證號" }).type(idNumber);
-    await page.locator(`#con_lisMem_member_nation_${i}`).selectOption("中華民國");
+    if (isTaroko) {
+      //
+    } else {
+      await page.getByRole("button", { name: new RegExp(label, "i") }).click();
+    }
+    if (isTaroko) {
+      await page.locator(`#con_step2_lisMem_member_name_${i}`).fill(name);
+    } else {
+      await page.getByLabel(label).getByRole("textbox", { name: "請輸入姓名" }).fill(name);
+    }
+    await page
+      .locator(isTaroko ? `#con_step2_lisMem_ddlmember_country_${i}` : `#con_lisMem_ddlmember_country_${i}`)
+      .selectOption({ label: city });
+    await page
+      .locator(isTaroko ? `#con_step2_lisMem_ddlmember_city_${i}` : `#con_lisMem_ddlmember_city_${i}`)
+      .selectOption({ label: district });
+    if (isTaroko) {
+      await page.locator(`#con_step2_lisMem_member_addr_${i}`).fill(addressDetail);
+    } else {
+      await page
+        .getByLabel(label)
+        .getByRole("textbox", { name: isTaroko ? "請輸入聯絡地址" : "請輸入地址" })
+        .fill(addressDetail);
+    }
+    if (isTaroko) {
+      await page.locator(`#con_step2_lisMem_member_tel_${i}`).fill(homePhone || mobilePhone);
+      await page.locator(`#con_step2_lisMem_member_mobile_${i}`).fill(mobilePhone);
+      await page.locator(`#con_step2_lisMem_member_email_${i}`).fill(email);
+      await page.locator(`#con_step2_lisMem_member_sid_${i}`).type(idNumber);
+    } else {
+      if (homePhone)
+        await page
+          .getByLabel(label)
+          .getByRole("textbox", { name: "請輸入電話" })
+          .fill(homePhone || mobilePhone);
+      await page.getByLabel(label).getByRole("textbox", { name: "請輸入手機" }).fill(mobilePhone);
+      await page.getByLabel(label).getByRole("textbox", { name: "請輸入電子郵件" }).fill(email);
+      await page.getByLabel(label).getByRole("textbox", { name: "請輸入證號" }).type(idNumber);
+    }
+
+    await page
+      .locator(isTaroko ? `#con_step2_lisMem_member_nation_${i}` : `#con_lisMem_member_nation_${i}`)
+      .selectOption("中華民國");
     await page.evaluate(
-      ({ i, birthday }) => {
-        document.querySelector(`input[name="ctl00$con$lisMem$ctrl${i + 1}$member_birthday"]`).value = birthday;
+      ({ i, birthday, isTaroko }) => {
+        document.querySelector(
+          isTaroko
+            ? `input[name="ctl00$con$step2$lisMem$ctrl${i + 1}$member_birthday"]`
+            : `input[name="ctl00$con$lisMem$ctrl${i + 1}$member_birthday"]`
+        ).value = birthday;
       },
-      { i, birthday }
+      { i, birthday, isTaroko }
     );
-    await page.getByLabel(label).getByRole("textbox", { name: "緊急聯絡人姓名" }).fill(emergencyContactName);
-    await page.getByLabel(label).getByRole("textbox", { name: "緊急聯絡人電話" }).fill(emergencyContactPhone);
+
+    if (isTaroko) {
+      await page.locator(`#con_step2_lisMem_member_contactname_${i}`).fill(emergencyContactName);
+      await page.locator(`#con_step2_lisMem_member_contacttel_${i}`).fill(emergencyContactPhone);
+    } else {
+      await page.getByLabel(label).getByRole("textbox", { name: "緊急聯絡人姓名" }).click();
+      await page.waitForTimeout(2000);
+      await page.getByLabel(label).getByRole("textbox", { name: "緊急聯絡人姓名" }).fill(emergencyContactName);
+      await page
+        .getByLabel(label)
+        .getByRole("textbox", { name: isTaroko ? "緊急聯絡人電話或手機" : "緊急聯絡人電話" })
+        .fill(emergencyContactPhone);
+    }
   }
 
   /**
    *
    */
   await page.waitForTimeout(200);
-  await page.getByRole("button", { name: "   留守人資料(請展開填寫資料)" }).click();
-  await page
-    .getByLabel("留守人資料(請展開填寫資料)")
-    .getByRole("textbox", { name: isYushan ? "請輸入姓名" : "留守人手機" })
-    .fill(watcher.name);
-  await page
-    .getByLabel("留守人資料(請展開填寫資料)")
-    .getByRole("textbox", { name: isYushan ? "請輸入手機(或電話)" : "留守人手機" })
-    .fill(watcher.mobilePhone);
-  if (!isYushan) await page.getByRole("textbox", { name: "留守人電話" }).fill(watcher.homePhone || watcher.mobilePhone);
-  await page.locator("#con_stay_email").fill(watcher.email);
-  await page.evaluate(
-    ({ watcher }) => {
-      document.querySelector('input[name="ctl00$con$stay_birthday"]').value = watcher.birthday;
-    },
-    { watcher }
-  );
+  if (isTaroko) {
+    await page.getByRole("button", { name: " 留守人資料 (請展開填寫資料)" }).click();
+  } else {
+    await page.getByRole("button", { name: "   留守人資料(請展開填寫資料)" }).click();
+  }
+  if (isTaroko) {
+    await page.locator("#con_step2_stay_name").fill(watcher.name);
+    await page.locator("#con_step2_stay_tel").fill(watcher.homePhone || watcher.mobilePhone);
+    await page.locator("#con_step2_stay_mobile").fill(watcher.mobilePhone);
+    await page.locator("#con_step2_stay_email").fill(watcher.email);
+  } else {
+    await page
+      .getByLabel("留守人資料(請展開填寫資料)")
+      .getByRole("textbox", { name: isYushan ? "請輸入姓名" : "留守人手機" })
+      .fill(watcher.name);
+    await page
+      .getByLabel("留守人資料(請展開填寫資料)")
+      .getByRole("textbox", { name: isYushan ? "請輸入手機(或電話)" : "留守人手機" })
+      .fill(watcher.mobilePhone);
+    if (!isYushan)
+      await page.getByRole("textbox", { name: "留守人電話" }).fill(watcher.homePhone || watcher.mobilePhone);
+    await page.locator("#con_stay_email").fill(watcher.email);
+    await page.evaluate(
+      ({ watcher }) => {
+        document.querySelector('input[name="ctl00$con$stay_birthday"]').value = watcher.birthday;
+      },
+      { watcher }
+    );
+  }
 
   /**
    *
