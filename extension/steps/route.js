@@ -1,15 +1,22 @@
 (function (root) {
-  const { byText, click, clickableByText, waitFor } = root.HikingFormHelpers;
+  const { byText, click, clickableByText, textOf, waitFor } = root.HikingFormHelpers;
+
+  function applicationLinkForRoute(routeText) {
+    const container = routeText.parentElement?.parentElement;
+    return [...(container?.querySelectorAll("a") || [])].find((link) =>
+      textOf(link).includes("進入申請"),
+    );
+  }
 
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.route = async function route(data, updateSession) {
     await click(() => clickableByText(data.org, true), data.org);
     const routeText = await waitFor(() => byText(data.route, { exact: true }), data.route);
-    const container = routeText.closest("tr, li, div") || routeText.parentElement;
-    await updateSession({ stage: "agreements" });
-    await click(
-      () => container?.querySelector("a") || clickableByText("進入申請"),
-      "進入申請",
+    const applicationLink = await waitFor(
+      () => applicationLinkForRoute(routeText),
+      `${data.route} 的進入申請連結`,
     );
+    await updateSession({ stage: "agreements" });
+    await click(applicationLink, `${data.route} 的進入申請連結`);
   };
 })(globalThis);
