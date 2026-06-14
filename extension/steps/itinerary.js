@@ -23,6 +23,10 @@
     return dayCount?.value === String(data.numOfDays) && startDate?.value === data.startDate;
   }
 
+  function completionButton() {
+    return document.querySelector("#con_btnover, #con_step1_btnover");
+  }
+
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.itinerary = async function itinerary(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
@@ -69,7 +73,7 @@
         await check(() => radioForSpot(spot), spot);
         await sleep(1000);
       }
-      await click(() => clickableByText("完成路線"), "完成路線");
+      await click(completionButton, "完成路線");
       if (dayIndex < data.plan.length - 1) {
         await waitFor(
           () => (currentDayIndex() > dayIndex ? true : null),
@@ -77,7 +81,7 @@
         );
       } else {
         await waitFor(
-          () => (clickableByText("完成路線") ? null : true),
+          () => (completionButton() ? null : true),
           "完成所有路線",
         );
       }
