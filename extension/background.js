@@ -8,6 +8,7 @@ async function startApplication(routeId, startDate, memberData) {
 
   const routesResponse = await fetch(chrome.runtime.getURL("routes.json"));
   const routes = await routesResponse.json();
+  if (!routeId) throw new Error("請選擇路線");
   const route = routes.find(({ id }) => id === routeId);
   if (!route) throw new Error("找不到選擇的路線");
   if (!startDate) throw new Error("請選擇入園日期");

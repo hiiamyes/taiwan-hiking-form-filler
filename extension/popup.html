@@ -10,11 +10,13 @@
     <main>
       <h1>登山申請自動填表</h1>
       <label for="route">路線</label>
-      <select id="route"></select>
+      <select id="route" required>
+        <option value="">請選擇路線</option>
+      </select>
       <label for="start-date">入園日期</label>
-      <input id="start-date" type="date" />
+      <input id="start-date" type="date" required />
       <label for="member-file">成員資料</label>
-      <input id="member-file" type="file" accept=".json,application/json" />
+      <input id="member-file" type="file" accept=".json,application/json" required />
       <button id="start" type="button" disabled>Start</button>
       <p id="status" role="status" aria-live="polite"></p>
     </main>

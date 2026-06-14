@@ -4,6 +4,12 @@ const routeSelect = document.querySelector("#route");
 const startDateInput = document.querySelector("#start-date");
 const memberFileInput = document.querySelector("#member-file");
 let memberData = null;
+let routesLoaded = false;
+
+function updateStartButton() {
+  startButton.disabled =
+    !routesLoaded || !routeSelect.value || !startDateInput.value || !memberData;
+}
 
 function validateMemberData(data) {
   if (!data?.watcher || typeof data.watcher !== "object") {
@@ -30,24 +36,35 @@ async function loadRoutes() {
     option.textContent = `${route.label} · ${route.numOfDays} 天`;
     routeSelect.append(option);
   }
-  startButton.disabled = false;
+  routesLoaded = true;
+  updateStartButton();
 }
 
 memberFileInput.addEventListener("change", async () => {
   memberData = null;
+  updateStartButton();
   const [file] = memberFileInput.files;
   if (!file) return;
 
   try {
     memberData = validateMemberData(JSON.parse(await file.text()));
     statusElement.textContent = `已選擇：${file.name}`;
+    updateStartButton();
   } catch (error) {
     memberFileInput.value = "";
     statusElement.textContent = `錯誤：${error.message}`;
+    updateStartButton();
   }
 });
 
+routeSelect.addEventListener("change", updateStartButton);
+startDateInput.addEventListener("input", updateStartButton);
+
 startButton.addEventListener("click", async () => {
+  if (!routeSelect.value) {
+    statusElement.textContent = "請選擇路線";
+    return;
+  }
   if (!startDateInput.value) {
     statusElement.textContent = "請選擇入園日期";
     return;
@@ -73,7 +90,7 @@ startButton.addEventListener("click", async () => {
     window.close();
   } catch (error) {
     statusElement.textContent = `錯誤：${error.message}`;
-    startButton.disabled = false;
+    updateStartButton();
   }
 });
 
