@@ -18,6 +18,7 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
   let currentDay = 1;
   let completionVisible = true;
   const schedule = { text: "" };
+  const routePrompt = { getClientRects: () => [{}] };
 
   const context = {
     document: {
@@ -26,6 +27,7 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
         if (selector === "#con_sumday") return { value: "2" };
         if (selector === "#con_applystart") return { value: "2026-07-01" };
         if (selector === "#con_lblSchedule, #con_step1_lblSchedule") return schedule;
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return routePrompt;
         if (selector === "#con_btnover, #con_step1_btnover") {
           return completionVisible ? {} : null;
         }
@@ -42,7 +44,10 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
       },
       async click(_elementOrGetter, description) {
         clicks.push(description);
-        if (description === "完成路線" && currentDay === 2) completionVisible = false;
+        if (description === "完成路線" && currentDay === 2) {
+          completionVisible = false;
+          routePrompt.getClientRects = () => [];
+        }
       },
       clickableByText(text) {
         if (text === "完成路線" && !completionVisible) return null;
@@ -85,7 +90,7 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
     "路線地點：第一天地點",
     "第2天行程",
     "路線地點：第二天地點",
-    "完成所有路線",
+    "完成路線",
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);
 });
@@ -98,6 +103,7 @@ test("itinerary step configures an initial page even when next is visible", asyn
   let configured = false;
   let completionVisible = true;
   const schedule = { text: "" };
+  const routePrompt = { getClientRects: () => [{}] };
 
   const context = {
     document: {
@@ -108,6 +114,7 @@ test("itinerary step configures an initial page even when next is visible", asyn
           return { value: configured ? "2026-07-01" : "" };
         }
         if (selector === "#con_lblSchedule, #con_step1_lblSchedule") return schedule;
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return routePrompt;
         if (selector === "#con_btnover, #con_step1_btnover") {
           return completionVisible ? {} : null;
         }
@@ -124,7 +131,10 @@ test("itinerary step configures an initial page even when next is visible", asyn
       },
       async click(_elementOrGetter, description) {
         clicks.push(description);
-        if (description === "完成路線") completionVisible = false;
+        if (description === "完成路線") {
+          completionVisible = false;
+          routePrompt.getClientRects = () => [];
+        }
       },
       clickableByText(text) {
         if (text === "完成路線" && !completionVisible) return null;
@@ -171,6 +181,7 @@ test("itinerary step clicks the stable completion-button ID from the live markup
   const completionButton = {};
   const clickedElements = [];
   let completionVisible = true;
+  const routePrompt = { getClientRects: () => [{}] };
 
   const context = {
     document: {
@@ -181,6 +192,7 @@ test("itinerary step clicks the stable completion-button ID from the live markup
         if (selector === "#con_btnover, #con_step1_btnover") {
           return completionVisible ? completionButton : null;
         }
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return routePrompt;
         return {};
       },
       querySelectorAll() {
@@ -192,6 +204,7 @@ test("itinerary step clicks the stable completion-button ID from the live markup
       async click(elementOrGetter) {
         clickedElements.push(elementOrGetter());
         completionVisible = false;
+        routePrompt.getClientRects = () => [];
       },
       clickableByText(text) {
         return text === "下一步" ? {} : null;
@@ -231,6 +244,7 @@ test("itinerary step waits for each selected spot to appear before completing th
   const events = [];
   const schedule = { text: "" };
   let completionVisible = true;
+  const routePrompt = { getClientRects: () => [{}] };
 
   const context = {
     document: {
@@ -239,6 +253,7 @@ test("itinerary step waits for each selected spot to appear before completing th
         if (selector === "#con_sumday") return { value: "1" };
         if (selector === "#con_applystart") return { value: "2026-07-23" };
         if (selector === "#con_lblSchedule, #con_step1_lblSchedule") return schedule;
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return routePrompt;
         if (selector === "#con_btnover, #con_step1_btnover") {
           return completionVisible ? {} : null;
         }
@@ -255,6 +270,7 @@ test("itinerary step waits for each selected spot to appear before completing th
       async click(_elementOrGetter, description) {
         events.push(`click:${description}`);
         completionVisible = false;
+        routePrompt.getClientRects = () => [];
       },
       clickableByText(text) {
         return text === "下一步" ? {} : null;
@@ -295,4 +311,62 @@ test("itinerary step waits for each selected spot to appear before completing th
     "wait:路線地點：桃山",
     "click:完成路線",
   ]);
+});
+
+test("final route completion waits for the next-location prompt to hide", async () => {
+  const waits = [];
+  const routePrompt = { getClientRects: () => [{}] };
+
+  const context = {
+    document: {
+      querySelector(selector) {
+        if (selector === '[id$="hidnowday"]') return { value: "1" };
+        if (selector === "#con_sumday") return { value: "1" };
+        if (selector === "#con_applystart") return { value: "2026-07-23" };
+        if (selector === "#con_btnover, #con_step1_btnover") return {};
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return routePrompt;
+        return {};
+      },
+      querySelectorAll() {
+        return [];
+      },
+    },
+    HikingFormHelpers: {
+      async check() {},
+      async click() {},
+      clickableByText() {
+        return {};
+      },
+      async fill() {},
+      inputByText() {
+        return {};
+      },
+      async select() {},
+      async sleep() {},
+      textOf() {
+        return "";
+      },
+      async waitFor(getValue, description) {
+        waits.push(description);
+        if (description === "完成路線") routePrompt.getClientRects = () => [];
+        const value = getValue();
+        assert.ok(value);
+        return value;
+      },
+    },
+  };
+
+  vm.runInNewContext(itineraryStepSource, context);
+  await context.HikingFormStepHandlers.itinerary(
+    {
+      org: "雪霸國家公園管理處",
+      startDate: "2026-07-23",
+      numOfDays: 1,
+      plan: [{ spots: [] }],
+    },
+    async () => {},
+  );
+
+  assert.ok(waits.includes("完成路線"));
+  assert.ok(!waits.includes("完成所有路線"));
 });

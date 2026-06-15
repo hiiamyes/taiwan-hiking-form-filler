@@ -31,6 +31,11 @@
     return textOf(document.querySelector("#con_lblSchedule, #con_step1_lblSchedule"));
   }
 
+  function routeSelectionPromptIsVisible() {
+    const prompt = document.querySelector("#con_lbRoute, #con_step1_lbRoute");
+    return prompt?.getClientRects().length > 0;
+  }
+
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.itinerary = async function itinerary(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
@@ -95,8 +100,8 @@
         );
       } else {
         await waitFor(
-          () => (completionButton() ? null : true),
-          "完成所有路線",
+          () => (routeSelectionPromptIsVisible() ? null : true),
+          "完成路線",
         );
       }
     }
