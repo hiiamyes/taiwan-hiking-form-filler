@@ -36,6 +36,33 @@
     return prompt?.getClientRects().length > 0;
   }
 
+  function routeIsComplete(data) {
+    const schedule = routeScheduleText().toLowerCase();
+    const finalDay = data.plan.at(-1);
+    return (
+      Boolean(schedule) &&
+      !completionButton() &&
+      !routeSelectionPromptIsVisible() &&
+      finalDay.spots.every((spot) => schedule.includes(spot.toLowerCase()))
+    );
+  }
+
+  function itineraryDebugState() {
+    const button = completionButton();
+    return {
+      completionButton: button
+        ? {
+            id: button.id,
+            href: button.getAttribute?.("href"),
+            visible: button.getClientRects?.().length > 0,
+          }
+        : null,
+      currentDay: currentDayIndex() + 1,
+      routePromptVisible: routeSelectionPromptIsVisible(),
+      schedule: routeScheduleText(),
+    };
+  }
+
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.itinerary = async function itinerary(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
@@ -76,7 +103,7 @@
         "目前行程天數",
       )) - 1;
 
-    for (; dayIndex < data.plan.length; dayIndex++) {
+    for (; dayIndex < data.plan.length && !routeIsComplete(data); dayIndex++) {
       const day = data.plan[dayIndex];
       for (const spot of day.spots) {
         const previousSchedule = routeScheduleText();
@@ -92,7 +119,12 @@
           `路線地點：${spot}`,
         );
       }
-      await click(completionButton, "完成路線");
+      try {
+        await click(completionButton, "完成路線");
+      } catch (error) {
+        console.error("Taiwan Hiking Form Filler completion-button state:", itineraryDebugState());
+        throw new Error(`${error.message}；狀態：${JSON.stringify(itineraryDebugState())}`);
+      }
       if (dayIndex < data.plan.length - 1) {
         await waitFor(
           () => (currentDayIndex() > dayIndex ? true : null),

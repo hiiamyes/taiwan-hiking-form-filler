@@ -370,3 +370,66 @@ test("final route completion waits for the next-location prompt to hide", async 
   assert.ok(waits.includes("完成路線"));
   assert.ok(!waits.includes("完成所有路線"));
 });
+
+test("itinerary step skips completion click when the final route is already complete", async () => {
+  const clicks = [];
+  const stageUpdates = [];
+
+  const context = {
+    document: {
+      querySelector(selector) {
+        if (selector === '[id$="hidnowday"]') return { value: "1" };
+        if (selector === "#con_sumday") return { value: "1" };
+        if (selector === "#con_applystart") return { value: "2026-07-23" };
+        if (selector === "#con_lblSchedule, #con_step1_lblSchedule") {
+          return { text: "第1天行程：武陵四秀登山口 桃山登山口 桃山 桃山登山口 武陵四秀登山口" };
+        }
+        if (selector === "#con_btnover, #con_step1_btnover") return null;
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") return null;
+        return {};
+      },
+      querySelectorAll() {
+        return [];
+      },
+    },
+    HikingFormHelpers: {
+      async check() {
+        throw new Error("should not select spots again");
+      },
+      async click(_elementOrGetter, description) {
+        clicks.push(description);
+      },
+      clickableByText() {
+        return {};
+      },
+      async fill() {},
+      inputByText() {
+        return {};
+      },
+      async select() {},
+      async sleep() {},
+      textOf(element) {
+        return element?.text || "";
+      },
+      async waitFor(getValue) {
+        const value = getValue();
+        assert.ok(value);
+        return value;
+      },
+    },
+  };
+
+  vm.runInNewContext(itineraryStepSource, context);
+  await context.HikingFormStepHandlers.itinerary(
+    {
+      org: "雪霸國家公園管理處",
+      startDate: "2026-07-23",
+      numOfDays: 1,
+      plan: [{ spots: ["武陵四秀登山口", "桃山登山口", "桃山", "桃山登山口", "武陵四秀登山口"] }],
+    },
+    async (patch) => stageUpdates.push(patch),
+  );
+
+  assert.deepEqual(clicks, ["下一步"]);
+  assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);
+});
