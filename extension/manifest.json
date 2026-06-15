@@ -23,7 +23,6 @@
         "https://hike.taiwan.gov.tw/*"
       ],
       "js": [
-        "launcher.js",
         "helpers.js",
         "steps/route.js",
         "steps/agreements.js",
@@ -31,9 +30,6 @@
         "steps/people.js",
         "steps/index.js",
         "content.js"
-      ],
-      "css": [
-        "launcher.css"
       ],
       "run_at": "document_idle"
     }
