@@ -52,9 +52,9 @@ function createBackground() {
   return { listener, sessionWrites, tabUpdates };
 }
 
-function sendMessage(listener, message) {
+function sendMessage(listener, message, sender = {}) {
   return new Promise((resolve) => {
-    const asyncResponse = listener(message, {}, resolve);
+    const asyncResponse = listener(message, sender, resolve);
     assert.equal(asyncResponse, true);
   });
 }
@@ -121,4 +121,26 @@ test("start explains missing required input", async () => {
     })),
     { ok: false, error: "請選擇入園日期" },
   );
+});
+
+test("start from the application-page launcher uses its sender tab", async () => {
+  const background = createBackground();
+
+  const response = await sendMessage(
+    background.listener,
+    {
+      type: "START_APPLICATION",
+      routeId: routes[0].id,
+      startDate: "2026-07-01",
+      memberData,
+    },
+    { tab: { id: 99 } },
+  );
+
+  assert.deepEqual(normalize(response), { ok: true });
+  assert.deepEqual(normalize(background.tabUpdates[0]), {
+    tabId: 99,
+    update: { url: "https://hike.taiwan.gov.tw/apply_1.aspx" },
+  });
+  assert.equal(background.sessionWrites[0].hikingFormFiller.tabId, 99);
 });

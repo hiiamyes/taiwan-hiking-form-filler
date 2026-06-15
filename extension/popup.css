@@ -64,6 +64,14 @@ button:disabled {
   opacity: 0.65;
 }
 
+.application-link {
+  display: block;
+  margin-top: 10px;
+  color: #176b3a;
+  font-size: 13px;
+  text-align: center;
+}
+
 #status {
   min-height: 18px;
   margin: 12px 0 0;
