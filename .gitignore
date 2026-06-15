@@ -1,5 +1,6 @@
 applications/
 application.json
+members.json
 src/captcha.png
 *.traineddata
 
