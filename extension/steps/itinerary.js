@@ -63,6 +63,30 @@
     };
   }
 
+  async function clickCompletionButton() {
+    const button = await waitFor(completionButton, "完成路線");
+    const href = button.getAttribute?.("href") || "";
+    const postBack = href.match(/__doPostBack\('([^']*)','([^']*)'\)/);
+    const form = document.forms?.form1;
+    const eventTarget = form?.querySelector("#__EVENTTARGET");
+    const eventArgument = form?.querySelector("#__EVENTARGUMENT");
+
+    console.info("Taiwan Hiking Form Filler clicking completion button:", {
+      ...itineraryDebugState(),
+      postBackTarget: postBack?.[1] || null,
+    });
+
+    if (postBack && form && eventTarget && eventArgument) {
+      eventTarget.value = postBack[1];
+      eventArgument.value = postBack[2];
+      form.submit();
+      return true;
+    }
+
+    await click(() => button, "完成路線");
+    return false;
+  }
+
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.itinerary = async function itinerary(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
@@ -120,7 +144,7 @@
         );
       }
       try {
-        await click(completionButton, "完成路線");
+        if (await clickCompletionButton()) return;
       } catch (error) {
         console.error("Taiwan Hiking Form Filler completion-button state:", itineraryDebugState());
         throw new Error(`${error.message}；狀態：${JSON.stringify(itineraryDebugState())}`);

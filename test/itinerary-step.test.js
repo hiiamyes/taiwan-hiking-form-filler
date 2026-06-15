@@ -88,8 +88,10 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
   assert.deepEqual(waits, [
     "目前行程天數",
     "路線地點：第一天地點",
+    "完成路線",
     "第2天行程",
     "路線地點：第二天地點",
+    "完成路線",
     "完成路線",
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);
@@ -305,10 +307,11 @@ test("itinerary step waits for each selected spot to appear before completing th
     async () => {},
   );
 
-  assert.deepEqual(events.slice(0, 4), [
+  assert.deepEqual(events.slice(0, 5), [
     "wait:目前行程天數",
     "check:桃山",
     "wait:路線地點：桃山",
+    "wait:完成路線",
     "click:完成路線",
   ]);
 });
@@ -432,4 +435,87 @@ test("itinerary step skips completion click when the final route is already comp
 
   assert.deepEqual(clicks, ["下一步"]);
   assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);
+});
+
+test("itinerary step submits the ASP.NET completion postback directly", async () => {
+  const eventTarget = { value: "" };
+  const eventArgument = { value: "" };
+  let submitted = false;
+  const completionButton = {
+    id: "con_btnover",
+    getAttribute(name) {
+      return name === "href" ? "javascript:__doPostBack('ctl00$con$btnover','')" : null;
+    },
+    getClientRects() {
+      return [{}];
+    },
+  };
+  const form = {
+    querySelector(selector) {
+      if (selector === "#__EVENTTARGET") return eventTarget;
+      if (selector === "#__EVENTARGUMENT") return eventArgument;
+      return null;
+    },
+    submit() {
+      submitted = true;
+    },
+  };
+
+  const context = {
+    console: { info() {}, error() {} },
+    document: {
+      forms: { form1: form },
+      querySelector(selector) {
+        if (selector === '[id$="hidnowday"]') return { value: "1" };
+        if (selector === "#con_sumday") return { value: "1" };
+        if (selector === "#con_applystart") return { value: "2026-07-23" };
+        if (selector === "#con_btnover, #con_step1_btnover") return completionButton;
+        if (selector === "#con_lbRoute, #con_step1_lbRoute") {
+          return { getClientRects: () => [{}] };
+        }
+        return {};
+      },
+      querySelectorAll() {
+        return [];
+      },
+    },
+    HikingFormHelpers: {
+      async check() {},
+      async click() {
+        throw new Error("generic click should not be used for ASP.NET postback");
+      },
+      clickableByText() {
+        return {};
+      },
+      async fill() {},
+      inputByText() {
+        return {};
+      },
+      async select() {},
+      async sleep() {},
+      textOf() {
+        return "";
+      },
+      async waitFor(getValue) {
+        const value = getValue();
+        assert.ok(value);
+        return value;
+      },
+    },
+  };
+
+  vm.runInNewContext(itineraryStepSource, context);
+  await context.HikingFormStepHandlers.itinerary(
+    {
+      org: "雪霸國家公園管理處",
+      startDate: "2026-07-23",
+      numOfDays: 1,
+      plan: [{ spots: [] }],
+    },
+    async () => {},
+  );
+
+  assert.equal(submitted, true);
+  assert.equal(eventTarget.value, "ctl00$con$btnover");
+  assert.equal(eventArgument.value, "");
 });
