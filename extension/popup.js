@@ -1,10 +1,12 @@
 const startButton = document.querySelector("#start");
 const statusElement = document.querySelector("#status");
 const routeSelect = document.querySelector("#route");
+const teamNameInput = document.querySelector("#team-name");
 const startDateInput = document.querySelector("#start-date");
 const memberFileInput = document.querySelector("#member-file");
 const memberStatusElement = document.querySelector("#member-status");
 const ROUTE_KEY = "selectedRoute";
+const TEAM_NAME_KEY = "selectedTeamName";
 const START_DATE_KEY = "selectedStartDate";
 const MEMBER_DATA_KEY = "selectedMemberData";
 const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
@@ -14,7 +16,11 @@ let routesLoaded = false;
 
 function updateStartButton() {
   startButton.disabled =
-    !routesLoaded || !routeSelect.value || !startDateInput.value || !memberData;
+    !routesLoaded ||
+    !routeSelect.value ||
+    !teamNameInput.value.trim() ||
+    !startDateInput.value ||
+    !memberData;
 }
 
 function validateMemberData(data) {
@@ -57,6 +63,12 @@ async function loadRoutes() {
 async function loadSavedStartDate() {
   const saved = await chrome.storage.local.get(START_DATE_KEY);
   startDateInput.value = saved[START_DATE_KEY] || "";
+  updateStartButton();
+}
+
+async function loadSavedTeamName() {
+  const saved = await chrome.storage.local.get(TEAM_NAME_KEY);
+  teamNameInput.value = saved[TEAM_NAME_KEY] || "";
   updateStartButton();
 }
 
@@ -114,6 +126,12 @@ routeSelect.addEventListener("change", async () => {
   });
   updateStartButton();
 });
+teamNameInput.addEventListener("input", async () => {
+  await chrome.storage.local.set({
+    [TEAM_NAME_KEY]: teamNameInput.value.trim(),
+  });
+  updateStartButton();
+});
 startDateInput.addEventListener("input", async () => {
   await chrome.storage.local.set({
     [START_DATE_KEY]: startDateInput.value,
@@ -130,6 +148,10 @@ startButton.addEventListener("click", async () => {
     statusElement.textContent = "請選擇入園日期";
     return;
   }
+  if (!teamNameInput.value.trim()) {
+    statusElement.textContent = "請輸入隊伍名稱";
+    return;
+  }
   if (!memberData) {
     statusElement.textContent = "請選擇成員 JSON 檔案";
     return;
@@ -142,6 +164,7 @@ startButton.addEventListener("click", async () => {
     const response = await chrome.runtime.sendMessage({
       type: "START_APPLICATION",
       routeId: routeSelect.value,
+      teamName: teamNameInput.value.trim(),
       startDate: startDateInput.value,
       memberData,
     });
@@ -157,6 +180,7 @@ startButton.addEventListener("click", async () => {
 
 Promise.all([
   loadRoutes(),
+  loadSavedTeamName(),
   loadSavedStartDate(),
   loadSavedMemberData(),
   loadWorkflowError(),

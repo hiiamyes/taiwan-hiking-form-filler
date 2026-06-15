@@ -101,7 +101,7 @@
       if (!isTaroko) {
         await fill(
           () => inputByText(isYushan ? "請輸入隊名" : "隊伍名稱"),
-          `${data.teamName || ""}-${data.startDate}`,
+          `${data.teamName}-${data.startDate}`,
           "隊伍名稱",
         );
       }

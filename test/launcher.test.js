@@ -13,6 +13,7 @@ test("application-page launcher starts with saved selections", async () => {
   const route = { id: "taoshan-day-hike", label: "桃山單攻", numOfDays: 1 };
   const saved = {
     selectedRoute: route.id,
+    selectedTeamName: "桃山隊",
     selectedStartDate: "2026-07-23",
     selectedMemberData: {
       watcher: { name: "Watcher" },
@@ -94,6 +95,7 @@ test("application-page launcher starts with saved selections", async () => {
     {
       type: "START_APPLICATION",
       routeId: route.id,
+      teamName: "桃山隊",
       startDate: "2026-07-23",
       memberData: saved.selectedMemberData,
     },
@@ -165,6 +167,7 @@ test("application-page launcher disables start when saved selections are incompl
 test("application-page launcher remains visible when route data fails to load", async () => {
   const saved = {
     selectedRoute: "taoshan-day-hike",
+    selectedTeamName: "桃山隊",
     selectedStartDate: "2026-07-23",
     selectedMemberData: {
       watcher: { name: "Watcher" },

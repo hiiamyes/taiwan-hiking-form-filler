@@ -1,6 +1,7 @@
 const SESSION_KEY = "hikingFormFiller";
 const steps = globalThis.HikingFormSteps;
 const ROUTE_KEY = "selectedRoute";
+const TEAM_NAME_KEY = "selectedTeamName";
 const START_DATE_KEY = "selectedStartDate";
 const MEMBER_DATA_KEY = "selectedMemberData";
 const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
@@ -62,13 +63,15 @@ async function renderLauncher() {
   try {
     const saved = await chrome.storage.local.get([
       ROUTE_KEY,
+      TEAM_NAME_KEY,
       START_DATE_KEY,
       MEMBER_DATA_KEY,
       MEMBER_FILE_NAME_KEY,
     ]);
     const routeId = saved[ROUTE_KEY];
+    const teamName = saved[TEAM_NAME_KEY];
     const memberData = saved[MEMBER_DATA_KEY];
-    const ready = Boolean(routeId && saved[START_DATE_KEY] && memberData);
+    const ready = Boolean(routeId && teamName && saved[START_DATE_KEY] && memberData);
     let routeLabel = routeId || "未選擇";
     try {
       const routesResponse = await fetch(chrome.runtime.getURL("routes.json"));
@@ -80,10 +83,11 @@ async function renderLauncher() {
 
     summary.textContent = [
       `路線：${routeLabel}`,
+      `隊伍：${teamName || "未輸入"}`,
       `日期：${saved[START_DATE_KEY] || "未選擇"}`,
       `成員：${saved[MEMBER_FILE_NAME_KEY] || (memberData ? "已儲存資料" : "未匯入")}`,
     ].join("\n");
-    status.textContent = ready ? "" : "請先在擴充功能 popup 設定路線、日期和成員資料。";
+    status.textContent = ready ? "" : "請先在擴充功能 popup 設定路線、隊伍名稱、日期和成員資料。";
     startButton.disabled = !ready;
 
     startButton.addEventListener("click", async () => {
@@ -92,6 +96,7 @@ async function renderLauncher() {
       const response = await chrome.runtime.sendMessage({
         type: "START_APPLICATION",
         routeId,
+        teamName,
         startDate: saved[START_DATE_KEY],
         memberData,
       });

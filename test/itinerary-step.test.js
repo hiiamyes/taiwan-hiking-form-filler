@@ -100,6 +100,7 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
 test("itinerary step configures an initial page even when next is visible", async () => {
   const checks = [];
   const clicks = [];
+  const fills = [];
   const selects = [];
   const stageUpdates = [];
   let configured = false;
@@ -142,7 +143,9 @@ test("itinerary step configures an initial page even when next is visible", asyn
         if (text === "完成路線" && !completionVisible) return null;
         return { getClientRects: () => [{}] };
       },
-      async fill() {},
+      async fill(_elementOrGetter, value, description) {
+        fills.push({ value, description });
+      },
       inputByText() {
         return {};
       },
@@ -166,6 +169,7 @@ test("itinerary step configures an initial page even when next is visible", asyn
   await context.HikingFormStepHandlers.itinerary(
     {
       org: "雪霸國家公園管理處",
+      teamName: "大劍隊",
       startDate: "2026-07-01",
       numOfDays: 1,
       plan: [{ spots: ["第一天地點"] }],
@@ -174,6 +178,7 @@ test("itinerary step configures an initial page even when next is visible", asyn
   );
 
   assert.deepEqual(selects, ["行程天數", "入園日期"]);
+  assert.deepEqual(fills, [{ value: "大劍隊-2026-07-01", description: "隊伍名稱" }]);
   assert.deepEqual(checks, ["第一天地點"]);
   assert.deepEqual(clicks, ["完成路線", "下一步"]);
   assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);

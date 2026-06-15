@@ -1,7 +1,7 @@
 const SESSION_KEY = "hikingFormFiller";
 const START_URL = "https://hike.taiwan.gov.tw/apply_1.aspx";
 
-async function startApplication(routeId, startDate, memberData, senderTabId) {
+async function startApplication(routeId, teamName, startDate, memberData, senderTabId) {
   await chrome.storage.session.setAccessLevel({
     accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
   });
@@ -11,6 +11,7 @@ async function startApplication(routeId, startDate, memberData, senderTabId) {
   if (!routeId) throw new Error("請選擇路線");
   const route = routes.find(({ id }) => id === routeId);
   if (!route) throw new Error("找不到選擇的路線");
+  if (!teamName?.trim()) throw new Error("請輸入隊伍名稱");
   if (!startDate) throw new Error("請選擇入園日期");
   if (!memberData?.watcher || !Array.isArray(memberData.members)) {
     throw new Error("請選擇有效的成員檔案");
@@ -22,6 +23,7 @@ async function startApplication(routeId, startDate, memberData, senderTabId) {
 
   const application = {
     ...routeData,
+    teamName: teamName.trim(),
     startDate,
     watcher: memberData.watcher,
     members: memberData.members,
@@ -53,7 +55,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "START_APPLICATION") {
-    startApplication(message.routeId, message.startDate, message.memberData, sender.tab?.id)
+    startApplication(
+      message.routeId,
+      message.teamName,
+      message.startDate,
+      message.memberData,
+      sender.tab?.id,
+    )
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: error.message }));
     return true;

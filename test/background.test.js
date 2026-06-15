@@ -75,6 +75,7 @@ test("start merges selected route, date, and members then navigates the current 
   const response = await sendMessage(background.listener, {
     type: "START_APPLICATION",
     routeId: selectedRoute.id,
+    teamName: "大劍隊",
     startDate: "2026-07-01",
     memberData,
   });
@@ -92,6 +93,7 @@ test("start merges selected route, date, and members then navigates the current 
   assert.equal(session.stage, "route");
   assert.equal(session.application.org, selectedRoute.org);
   assert.equal(session.application.route, selectedRoute.route);
+  assert.equal(session.application.teamName, "大劍隊");
   assert.equal(session.application.startDate, "2026-07-01");
   assert.deepEqual(session.application.watcher, memberData.watcher);
   assert.deepEqual(session.application.members, memberData.members);
@@ -106,6 +108,7 @@ test("start explains missing required input", async () => {
     normalize(await sendMessage(background.listener, {
       type: "START_APPLICATION",
       routeId: "",
+      teamName: "大劍隊",
       startDate: "2026-07-01",
       memberData,
     })),
@@ -116,10 +119,22 @@ test("start explains missing required input", async () => {
     normalize(await sendMessage(background.listener, {
       type: "START_APPLICATION",
       routeId: routes[0].id,
+      teamName: "大劍隊",
       startDate: "",
       memberData,
     })),
     { ok: false, error: "請選擇入園日期" },
+  );
+
+  assert.deepEqual(
+    normalize(await sendMessage(background.listener, {
+      type: "START_APPLICATION",
+      routeId: routes[0].id,
+      teamName: "",
+      startDate: "2026-07-01",
+      memberData,
+    })),
+    { ok: false, error: "請輸入隊伍名稱" },
   );
 });
 
@@ -131,6 +146,7 @@ test("start from the application-page launcher uses its sender tab", async () =>
     {
       type: "START_APPLICATION",
       routeId: routes[0].id,
+      teamName: "桃山隊",
       startDate: "2026-07-01",
       memberData,
     },
