@@ -27,6 +27,10 @@
     return document.querySelector("#con_btnover, #con_step1_btnover");
   }
 
+  function routeScheduleText() {
+    return textOf(document.querySelector("#con_lblSchedule, #con_step1_lblSchedule"));
+  }
+
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.itinerary = async function itinerary(data, updateSession) {
     const isYushan = data.org === "玉山國家公園管理處";
@@ -70,8 +74,18 @@
     for (; dayIndex < data.plan.length; dayIndex++) {
       const day = data.plan[dayIndex];
       for (const spot of day.spots) {
+        const previousSchedule = routeScheduleText();
         await check(() => radioForSpot(spot), spot);
-        await sleep(1000);
+        await waitFor(
+          () => {
+            const schedule = routeScheduleText();
+            return schedule !== previousSchedule &&
+              schedule.toLowerCase().includes(spot.toLowerCase())
+              ? true
+              : null;
+          },
+          `路線地點：${spot}`,
+        );
       }
       await click(completionButton, "完成路線");
       if (dayIndex < data.plan.length - 1) {
