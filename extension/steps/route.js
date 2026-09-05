@@ -1,5 +1,5 @@
 (function (root) {
-  const { byText, click, textOf, waitFor } = root.HikingFormHelpers;
+  const { byText, textOf, waitFor } = root.HikingFormHelpers;
 
   function organizationButton(org) {
     return byText(org, {
@@ -26,12 +26,13 @@
 
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.route = async function route(data, updateSession) {
-    await click(() => organizationButton(data.org), `管理處：${data.org}`);
+    const orgButton = await waitFor(() => organizationButton(data.org), `管理處：${data.org}`);
+    orgButton.click();
     const applicationLink = await waitFor(
       () => applicationLinkForVisibleRoute(data.route),
       `${data.org} / ${data.route} 的進入申請連結`,
     );
     await updateSession({ stage: "agreements" });
-    await click(applicationLink, `${data.org} / ${data.route} 的進入申請連結`);
+    applicationLink.click();
   };
 })(globalThis);

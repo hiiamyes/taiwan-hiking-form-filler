@@ -8,6 +8,7 @@ const MEMBER_FILE_NAME_KEY = "selectedMemberFileName";
 const STAGE_LABELS = {
   agreements: "同意注意事項",
   itinerary: "填寫路線行程",
+  itineraryDone: "完成路線行程",
   people: "填寫申請人、隊員與留守人",
   route: "選擇管理處與路線",
 };

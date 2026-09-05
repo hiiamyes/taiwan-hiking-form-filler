@@ -51,6 +51,98 @@ cp src/application.sample.json src/application.json
 node src/apply.js
 ```
 
+### Check Yushan lodging capacity
+
+This opens the Yushan lodging query page, reads every selectable hut/campsite
+from the `宿營地` dropdown, and prints the capacity calendar for the current and
+following month.
+
+```bash
+npm run check:yushan-capacity
+```
+
+Useful options:
+
+```bash
+node src/check-paiyun-capacity.js --months 3
+node src/check-paiyun-capacity.js --json
+node src/check-paiyun-capacity.js --output data/paiyun-capacity/latest.json
+node src/check-paiyun-capacity.js --lock-file tmp/paiyun-capacity.lock
+node src/check-paiyun-capacity.js --timeout-ms 90000 --retries 1
+node src/check-paiyun-capacity.js --headful
+```
+
+`--json` is useful if you want to pipe the capacity data into another script.
+`--output` writes a timestamped JSON payload atomically, so readers never see a
+half-written file. `--lock-file` prevents overlapping scheduled runs.
+`--headful` opens a visible browser window for debugging.
+
+### Run as a cron job
+
+Use absolute paths because cron runs with a small environment. This example
+fetches every hour, writes JSON to `data/paiyun-capacity/latest.json`, and appends
+errors to `logs/paiyun-capacity.log`.
+
+```cron
+0 * * * * cd /Users/yes-houzz/codes/yes/taiwan-hiking-form-filler && /usr/bin/env node src/check-paiyun-capacity.js --months 2 --output data/paiyun-capacity/latest.json --lock-file tmp/paiyun-capacity.lock --timeout-ms 90000 --retries 1 2>> logs/paiyun-capacity.log
+```
+
+Create the log directory before installing the cron entry:
+
+```bash
+mkdir -p logs
+```
+
+The output JSON has this shape:
+
+```json
+{
+  "fetchedAt": "2026-06-16T02:30:00.000Z",
+  "source": "https://hike.taiwan.gov.tw/bed_6.aspx",
+  "park": "玉山",
+  "targets": [
+    {
+      "id": "3",
+      "name": "排雲山莊",
+      "kind": "hut",
+      "months": []
+    }
+  ]
+}
+```
+
+### Verify changes
+
+Run the offline test suite:
+
+```bash
+npm test
+```
+
+Check only the capacity parser test:
+
+```bash
+node --test test/paiyun-capacity.test.js
+```
+
+Check the script syntax:
+
+```bash
+node --check src/check-paiyun-capacity.js
+```
+
+Run a short live check against the hiking site:
+
+```bash
+npm run check:paiyun -- --months 1
+```
+
+Run a cron-style output check:
+
+```bash
+node src/check-paiyun-capacity.js --months 1 --output /tmp/yushan-capacity.json --lock-file /tmp/yushan-capacity.lock --timeout-ms 90000 --retries 1
+```
+
 ## Chrome extension
 
 The `extension/` directory is a direct Chrome-extension version of

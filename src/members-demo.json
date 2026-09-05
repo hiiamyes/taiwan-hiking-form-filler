@@ -1,0 +1,53 @@
+{
+  "watcher": {
+    "name": "我是留守",
+    "homePhone": "0212345678",
+    "mobilePhone": "0912345678",
+    "birthday": "1960-01-01",
+    "email": "watcher@example.com"
+  },
+  "members": [
+    {
+      "leader": true,
+      "name": "我是領隊",
+      "idNumber": "TEST000001",
+      "homePhone": "0211111111",
+      "mobilePhone": "0911111111",
+      "birthday": "1990-01-01",
+      "city": "台北市",
+      "district": "信義區",
+      "addressDetail": "測試路1號",
+      "email": "member1@example.com",
+      "emergencyContactName": "測試聯絡人一",
+      "emergencyContactPhone": "0921111111"
+    },
+    {
+      "leader": false,
+      "name": "我是隊員1",
+      "idNumber": "TEST000002",
+      "homePhone": "0222222222",
+      "mobilePhone": "0922222222",
+      "birthday": "1991-02-02",
+      "city": "新北市",
+      "district": "板橋區",
+      "addressDetail": "測試街2號",
+      "email": "member2@example.com",
+      "emergencyContactName": "測試聯絡人二",
+      "emergencyContactPhone": "0932222222"
+    },
+    {
+      "leader": false,
+      "name": "我是隊員2",
+      "idNumber": "TEST000003",
+      "homePhone": "063333333",
+      "mobilePhone": "0933333333",
+      "birthday": "1992-03-03",
+      "city": "台南市",
+      "district": "東區",
+      "addressDetail": "測試路3號",
+      "email": "member3@example.com",
+      "emergencyContactName": "測試聯絡人三",
+      "emergencyContactPhone": "0943333333"
+    }
+  ]
+}

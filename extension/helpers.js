@@ -76,24 +76,19 @@
     return typeof elementOrGetter === "function" ? elementOrGetter() : elementOrGetter;
   }
 
-  async function fill(elementOrGetter, value, description) {
-    const element = await waitFor(() => resolveElement(elementOrGetter), description);
-    setValue(element, value);
-  }
-
   async function select(elementOrGetter, value, description) {
-    const element = await waitFor(() => resolveElement(elementOrGetter), description);
-    const option = [...element.options].find(
-      (item) => item.value === String(value) || textOf(item) === String(value),
+    const selection = await waitFor(
+      () => {
+        const element = resolveElement(elementOrGetter);
+        if (!element?.options) return null;
+        const option = [...element.options].find(
+          (item) => item.value === String(value) || textOf(item) === String(value),
+        );
+        return option ? { element, option } : null;
+      },
+      `${description} / ${value}`,
     );
-    if (!option) throw new Error(`找不到選項：${description} / ${value}`);
-    setValue(element, option.value);
-    await sleep();
-  }
-
-  async function click(elementOrGetter, description) {
-    const element = await waitFor(() => resolveElement(elementOrGetter), description);
-    element.click();
+    setValue(selection.element, selection.option.value);
     await sleep();
   }
 
@@ -109,12 +104,11 @@
   root.HikingFormHelpers = {
     byText,
     check,
-    click,
     clickableByText,
-    fill,
     input,
     inputByText,
     select,
+    setValue,
     sleep,
     textOf,
     waitFor,

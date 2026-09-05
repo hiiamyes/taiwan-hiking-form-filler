@@ -1,5 +1,5 @@
 (function (root) {
-  const { click, clickableByText } = root.HikingFormHelpers;
+  const { clickableByText, waitFor } = root.HikingFormHelpers;
 
   root.HikingFormStepHandlers = root.HikingFormStepHandlers || {};
   root.HikingFormStepHandlers.agreements = async function agreements(_data, updateSession) {
@@ -7,6 +7,7 @@
       if (!checkbox.checked) checkbox.click();
     }
     await updateSession({ stage: "itinerary" });
-    await click(() => clickableByText("同意", true), "同意");
+    const agreeButton = await waitFor(() => clickableByText("同意", true), "同意");
+    agreeButton.click();
   };
 })(globalThis);

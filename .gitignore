@@ -1,5 +1,8 @@
 applications/
 application.json
+members.json
+members-yes.json
+src/members-team.json
 src/captcha.png
 *.traineddata
 

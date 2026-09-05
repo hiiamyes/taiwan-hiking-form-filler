@@ -48,6 +48,7 @@ test("route step uses the exact organization and visible route link", async () =
           typeof elementOrGetter === "function" ? elementOrGetter() : elementOrGetter;
         element.click();
       },
+      async sleep() {},
       textOf(element) {
         return element.text;
       },

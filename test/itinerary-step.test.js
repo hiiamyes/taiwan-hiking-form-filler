@@ -10,7 +10,28 @@ const itineraryStepSource = fs.readFileSync(
   "utf8",
 );
 
-test("itinerary step waits for each route-completion AJAX update", async () => {
+function useNativeClicks(context) {
+  const waitFor = context.HikingFormHelpers.waitFor;
+  const click = context.HikingFormHelpers.click;
+  const fill = context.HikingFormHelpers.fill;
+  const descriptions = new WeakMap();
+
+  context.HikingFormHelpers.waitFor = async (getValue, description, ...args) => {
+    const value = await waitFor(getValue, description, ...args);
+    if (value && typeof value === "object" && typeof value.click !== "function") {
+      value.click = () => click(() => value, description);
+    }
+    if (value && typeof value === "object") {
+      descriptions.set(value, description);
+    }
+    return value;
+  };
+  context.HikingFormHelpers.setValue = (element, value) => {
+    fill(() => element, value, descriptions.get(element));
+  };
+}
+
+test("itinerary step waits for each day transition", async () => {
   const checks = [];
   const clicks = [];
   const waits = [];
@@ -72,6 +93,7 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -87,12 +109,11 @@ test("itinerary step waits for each route-completion AJAX update", async () => {
   assert.deepEqual(clicks, ["完成路線", "完成路線", "下一步"]);
   assert.deepEqual(waits, [
     "目前行程天數",
-    "路線地點：第一天地點",
     "完成路線",
     "第2天行程",
-    "路線地點：第二天地點",
     "完成路線",
     "完成路線",
+    "下一步",
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "people" }]);
 });
@@ -165,6 +186,7 @@ test("itinerary step configures an initial page even when next is visible", asyn
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -233,6 +255,7 @@ test("itinerary step clicks the stable completion-button ID from the live markup
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -247,7 +270,7 @@ test("itinerary step clicks the stable completion-button ID from the live markup
   assert.equal(clickedElements[0], completionButton);
 });
 
-test("itinerary step waits for each selected spot to appear before completing the route", async () => {
+test("itinerary step waits one second between selected spots", async () => {
   const events = [];
   const schedule = { text: "" };
   let completionVisible = true;
@@ -287,13 +310,16 @@ test("itinerary step waits for each selected spot to appear before completing th
         return {};
       },
       async select() {},
-      async sleep() {},
+      async sleep(milliseconds) {
+        events.push(`sleep:${milliseconds}`);
+      },
       textOf(element) {
         return element?.text || "";
       },
       async waitFor(getValue, description) {
         events.push(`wait:${description}`);
         if (description === "路線地點：桃山") schedule.text = "第1天行程：桃山";
+        if (description === "路線地點：喀拉業山") schedule.text += " 喀拉業山";
         const value = getValue();
         assert.ok(value);
         return value;
@@ -301,21 +327,23 @@ test("itinerary step waits for each selected spot to appear before completing th
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
       org: "雪霸國家公園管理處",
       startDate: "2026-07-23",
       numOfDays: 1,
-      plan: [{ spots: ["桃山"] }],
+      plan: [{ spots: ["桃山", "喀拉業山"] }],
     },
     async () => {},
   );
 
-  assert.deepEqual(events.slice(0, 5), [
+  assert.deepEqual(events.slice(0, 6), [
     "wait:目前行程天數",
     "check:桃山",
-    "wait:路線地點：桃山",
+    "sleep:1000",
+    "check:喀拉業山",
     "wait:完成路線",
     "click:完成路線",
   ]);
@@ -364,6 +392,7 @@ test("final route completion waits for the next-location prompt to hide", async 
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -427,6 +456,7 @@ test("itinerary step skips completion click when the final route is already comp
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -445,6 +475,7 @@ test("itinerary step skips completion click when the final route is already comp
 test("itinerary step submits the ASP.NET completion postback directly", async () => {
   const eventTarget = { value: "" };
   const eventArgument = { value: "" };
+  const stageUpdates = [];
   let submitted = false;
   const completionButton = {
     id: "con_btnover",
@@ -509,6 +540,7 @@ test("itinerary step submits the ASP.NET completion postback directly", async ()
     },
   };
 
+  useNativeClicks(context);
   vm.runInNewContext(itineraryStepSource, context);
   await context.HikingFormStepHandlers.itinerary(
     {
@@ -517,10 +549,11 @@ test("itinerary step submits the ASP.NET completion postback directly", async ()
       numOfDays: 1,
       plan: [{ spots: [] }],
     },
-    async () => {},
+    async (patch) => stageUpdates.push(patch),
   );
 
   assert.equal(submitted, true);
   assert.equal(eventTarget.value, "ctl00$con$btnover");
   assert.equal(eventArgument.value, "");
+  assert.deepEqual(JSON.parse(JSON.stringify(stageUpdates)), [{ stage: "itineraryDone" }]);
 });

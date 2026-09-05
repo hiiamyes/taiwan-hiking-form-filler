@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test": "node --test test/background.test.js test/itinerary-step.test.js test/launcher.test.js test/route-step.test.js test/routes.test.js",
+    "test": "node --test test/background.test.js test/itinerary-step.test.js test/launcher.test.js test/paiyun-capacity.test.js test/route-step.test.js test/routes.test.js",
+    "test:e2e": "node test/extension-flow.e2e.js",
     "test:live": "node --test test/route-step.live.test.js"
   },
   "dependencies": {
