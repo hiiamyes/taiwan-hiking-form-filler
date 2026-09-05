@@ -10,7 +10,7 @@
     {
       "leader": true,
       "name": "我是領隊",
-      "idNumber": "TEST000001",
+      "idNumber": "A100000001",
       "homePhone": "0211111111",
       "mobilePhone": "0911111111",
       "birthday": "1990-01-01",
@@ -24,7 +24,7 @@
     {
       "leader": false,
       "name": "我是隊員1",
-      "idNumber": "TEST000002",
+      "idNumber": "B200000004",
       "homePhone": "0222222222",
       "mobilePhone": "0922222222",
       "birthday": "1991-02-02",
@@ -38,7 +38,7 @@
     {
       "leader": false,
       "name": "我是隊員2",
-      "idNumber": "TEST000003",
+      "idNumber": "C100000003",
       "homePhone": "063333333",
       "mobilePhone": "0933333333",
       "birthday": "1992-03-03",
