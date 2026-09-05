@@ -12,6 +12,7 @@ const startDate = process.env.START_DATE || "2026-11-05";
 const teamName = process.env.TEAM_NAME || "Demo Team";
 const outputDir = path.resolve(process.env.DEMO_DIR || __dirname);
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "hiking-demo-"));
+const videoSize = { width: 1080, height: 1920 };
 
 const routes = JSON.parse(fs.readFileSync(path.join(extensionPath, "routes.json"), "utf8"));
 const memberData = JSON.parse(fs.readFileSync(memberPath, "utf8"));
@@ -49,10 +50,10 @@ function convertToMp4(webmPath, mp4Path) {
 async function run() {
   const context = await chromium.launchPersistentContext(profilePath, {
     headless: false,
-    viewport: { width: 1280, height: 720 },
+    viewport: videoSize,
     recordVideo: {
       dir: outputDir,
-      size: { width: 1280, height: 720 },
+      size: videoSize,
     },
     args: [
       `--disable-extensions-except=${extensionPath}`,
@@ -130,7 +131,7 @@ async function run() {
   convertToMp4(webmPath, mp4Path);
   fs.rmSync(webmPath, { force: true });
 
-  console.log(`Saved demo video: ${mp4Path}`);
+  console.log(`Saved Instagram Reels-compatible demo video (1080x1920): ${mp4Path}`);
 }
 
 run().catch((error) => {
